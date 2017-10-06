@@ -1,0 +1,12 @@
+{
+  "name": "gatsby-plugin-algolia",
+  "version": "0.0.1",
+  "keywords": ["gatsby", "search", "graphql", "algolia"],
+  "repository": "Haroenv/gatsby-plugin-algolia",
+  "license": "Apache-2.0",
+  "description": "A gatsby plugin to push to Algolia based on a certain query",
+  "dependencies": {
+    "algoliasearch": "^3.24.5",
+    "lodash.chunk": "^4.2.0"
+  }
+}
