@@ -1,7 +1,12 @@
 {
   "name": "gatsby-plugin-algolia",
-  "version": "0.0.1",
-  "keywords": ["gatsby", "search", "graphql", "algolia"],
+  "version": "0.0.2",
+  "keywords": [
+    "gatsby",
+    "search",
+    "graphql",
+    "algolia"
+  ],
   "repository": "algolia/gatsby-plugin-algolia",
   "license": "Apache-2.0",
   "author": "Algolia",
