@@ -1,5 +1,8 @@
 # Gatsby plugin Algolia
 
+> This plugin is in _beta_ and not officially supported yet
+> Feel free to open issues for any questions or ideas
+
 You can specify a list of queries to run and how to transform them into an array of objects to index. When you run `gatsby build`, it will publish those to Algolia.
 
 Here we have an example with some data that might not be very relevant, but will work with the default configuration of `gatsby new`

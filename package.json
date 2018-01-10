@@ -2,8 +2,9 @@
   "name": "gatsby-plugin-algolia",
   "version": "0.0.1",
   "keywords": ["gatsby", "search", "graphql", "algolia"],
-  "repository": "Haroenv/gatsby-plugin-algolia",
+  "repository": "algolia/gatsby-plugin-algolia",
   "license": "Apache-2.0",
+  "author": "Algolia",
   "description": "A gatsby plugin to push to Algolia based on a certain query",
   "dependencies": {
     "algoliasearch": "^3.24.5",
