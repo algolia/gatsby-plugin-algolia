@@ -5,7 +5,8 @@
     "gatsby",
     "search",
     "graphql",
-    "algolia"
+    "algolia",
+    "gatsby-plugin"
   ],
   "repository": "algolia/gatsby-plugin-algolia",
   "license": "Apache-2.0",
