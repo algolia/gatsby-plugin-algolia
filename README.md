@@ -39,9 +39,9 @@ const query = `{
 
 const queries = [
   {
-    indexName: 'index name to target',
     query,
-    transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node),
+    transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
+    indexName: 'index name to target', // overrides main index name, optional
   },
 ];
 
@@ -52,6 +52,7 @@ module.exports = {
       options: {
         appId: 'your appId',
         apiKey: 'your admin api key',
+        indexName: "index name to target", // for all queries
         queries,
         chunkSize: 10000, // default: 1000
       },
