@@ -52,8 +52,9 @@ exports.onPostBuild = async function(
 
 /**
  * Copy the settings, synonyms, and rules of the source index to the target index
- * @param  {Index} sourceIndex
- * @param  {Index} targetIndex
+ * @param client
+ * @param sourceIndex
+ * @param targetIndex
  * @return {Promise}
  */
 async function scopedCopyIndex(client, sourceIndex, targetIndex) {
@@ -63,8 +64,9 @@ async function scopedCopyIndex(client, sourceIndex, targetIndex) {
 
 /**
  * moves the source index to the target index
- * @param  {Index} sourceIndex
- * @param  {Index} targetIndex
+ * @param client
+ * @param sourceIndex
+ * @param targetIndex
  * @return {Promise}
  */
 async function moveIndex(client, sourceIndex, targetIndex) {
