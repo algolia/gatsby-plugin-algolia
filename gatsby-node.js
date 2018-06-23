@@ -20,17 +20,46 @@ exports.onPostBuild = function(
     transformer = identity,
   }) {
     const index = client.initIndex(indexName);
+    const tmpIndex = client.initIndex(`${indexName}_tmp`);
+
+    await scopedCopyIndex(client, index, tmpIndex);
+
     const result = await graphql(query);
     const objects = transformer(result);
     const chunks = chunk(objects, chunkSize);
 
     const chunkJobs = chunks.map(async function(chunked) {
-      const { taskID } = await index.addObjects(chunked);
-      return index.waitTask(taskID);
+      const { taskID } = await tmpIndex.addObjects(chunked);
+      return tmpIndex.waitTask(taskID);
     });
 
-    return Promise.all(chunkJobs);
+    await Promise.all(chunkJobs);
+
+    return moveIndex(client, tmpIndex, index);
   });
 
   return Promise.all(jobs);
 };
+
+
+/**
+ * Copy the settings, synonyms, and rules of the source index to the target index
+ * @param  {Index} sourceIndex
+ * @param  {Index} targetIndex
+ * @return {Promise}
+ */
+async function scopedCopyIndex(client, sourceIndex, targetIndex) {
+  const { taskID } = await client.copyIndex(sourceIndex.indexName, targetIndex.indexName, [ 'settings', 'synonyms', 'rules' ]);
+  return targetIndex.waitTask(taskID);
+}
+
+/**
+ * moves the source index to the target index
+ * @param  {Index} sourceIndex
+ * @param  {Index} targetIndex
+ * @return {Promise}
+ */
+async function moveIndex(client, sourceIndex, targetIndex) {
+  const { taskID } = await client.moveIndex(sourceIndex.indexName, targetIndex.indexName)
+  return targetIndex.waitTask(taskID);
+}
