@@ -49,7 +49,6 @@ exports.onPostBuild = async function(
   activity.end();
 };
 
-
 /**
  * Copy the settings, synonyms, and rules of the source index to the target index
  * @param client
@@ -58,7 +57,11 @@ exports.onPostBuild = async function(
  * @return {Promise}
  */
 async function scopedCopyIndex(client, sourceIndex, targetIndex) {
-  const { taskID } = await client.copyIndex(sourceIndex.indexName, targetIndex.indexName, [ 'settings', 'synonyms', 'rules' ]);
+  const { taskID } = await client.copyIndex(
+    sourceIndex.indexName,
+    targetIndex.indexName,
+    ['settings', 'synonyms', 'rules']
+  );
   return targetIndex.waitTask(taskID);
 }
 
@@ -70,6 +73,9 @@ async function scopedCopyIndex(client, sourceIndex, targetIndex) {
  * @return {Promise}
  */
 async function moveIndex(client, sourceIndex, targetIndex) {
-  const { taskID } = await client.moveIndex(sourceIndex.indexName, targetIndex.indexName)
+  const { taskID } = await client.moveIndex(
+    sourceIndex.indexName,
+    targetIndex.indexName
+  );
   return targetIndex.waitTask(taskID);
 }
