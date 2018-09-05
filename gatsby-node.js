@@ -1,5 +1,6 @@
 const algoliasearch = require('algoliasearch');
 const chunk = require('lodash.chunk');
+const report = require(`gatsby-cli/lib/reporter`);
 
 /**
  * give back the same thing as this was called with.
@@ -8,7 +9,7 @@ const chunk = require('lodash.chunk');
  */
 const identity = obj => obj;
 
-exports.onPostBuild = function(
+exports.onPostBuild = async function(
   { graphql },
   { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000 }
 ) {
@@ -32,5 +33,12 @@ exports.onPostBuild = function(
     return Promise.all(chunkJobs);
   });
 
-  return Promise.all(jobs);
+  activity = report.activityTimer(`index to Algolia`);
+  activity.start();
+  try {
+    await Promise.all(jobs);
+  } catch (err) {
+    report.panic(`failed to index to Algolia`, err);
+  }
+  activity.end();
 };
