@@ -14,7 +14,7 @@ $ yarn add gatsby-plugin-algolia
 
 ```js
 // gatsby-config.js
-const query = `{
+const myQuery = `{
   allSitePage {
     edges {
       node {
@@ -39,7 +39,7 @@ const query = `{
 
 const queries = [
   {
-    query,
+    query: myQuery,
     transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
     indexName: 'index name to target', // overrides main index name, optional
   },
