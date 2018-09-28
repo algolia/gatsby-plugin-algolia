@@ -20,12 +20,18 @@ exports.onPostBuild = async function(
     query,
     transformer = identity,
   }) {
+    if (!query) {
+      report.panic(`failed to index to Algolia. You did not give "query" to this query`)
+    }
     const index = client.initIndex(indexName);
     const tmpIndex = client.initIndex(`${indexName}_tmp`);
 
     await scopedCopyIndex(client, index, tmpIndex);
 
     const result = await graphql(query);
+    if (result.errors) {
+      report.panic(`failed to index to Algolia`, result.errors);
+    }
     const objects = transformer(result);
     const chunks = chunk(objects, chunkSize);
 
