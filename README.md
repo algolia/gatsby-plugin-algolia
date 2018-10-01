@@ -12,7 +12,19 @@ Here we have an example with some data that might not be very relevant, but will
 $ yarn add gatsby-plugin-algolia
 ```
 
+First add credentials to a .env file, which you won't commit. If you track this in your file, and especially if the site is open source, you will leak your admin API key. This would mean anyone is able to change anything on your Algolia index.
+
+```env
+// .env.production
+ALGOLIA_APP_ID=XXX
+ALGOLIA_INDEX_NAME=XXX
+```
+
 ```js
+require('dotenv').config({
+  path: `.env.${process.env.NODE_ENV}`,
+})
+
 // gatsby-config.js
 const myQuery = `{
   allSitePage {
@@ -50,8 +62,8 @@ module.exports = {
     {
       resolve: `gatsby-plugin-algolia`,
       options: {
-        appId: 'your appId',
-        apiKey: 'your admin api key',
+        appId: process.env.ALGOLIA_APP_ID,
+        apiKey: process.env.ALGOLIA_API_KEY,
         indexName: "index name to target", // for all queries
         queries,
         chunkSize: 10000, // default: 1000
