@@ -1,6 +1,6 @@
 const algoliasearch = require('algoliasearch');
 const chunk = require('lodash.chunk');
-const report = require(`gatsby-cli/lib/reporter`);
+const report = require('gatsby-cli/lib/reporter');
 
 /**
  * give back the same thing as this was called with.
@@ -13,15 +13,20 @@ exports.onPostBuild = async function(
   { graphql },
   { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000 }
 ) {
+  const activity = report.activityTimer(`index to Algolia`);
+  activity.start();
   const client = algoliasearch(appId, apiKey);
 
-  const jobs = queries.map(async function doQuery({
-    indexName = mainIndexName,
-    query,
-    transformer = identity,
-  }) {
+  setStatus(activity, `${queries.length} queries to index`);
+
+  const jobs = queries.map(async function doQuery(
+    { indexName = mainIndexName, query, transformer = identity },
+    i
+  ) {
     if (!query) {
-      report.panic(`failed to index to Algolia. You did not give "query" to this query`)
+      report.panic(
+        `failed to index to Algolia. You did not give "query" to this query`
+      );
     }
     const index = client.initIndex(indexName);
     const mainIndexExists = await indexExists(index);
@@ -29,15 +34,19 @@ exports.onPostBuild = async function(
     const indexToUse = mainIndexExists ? tmpIndex : index;
 
     if (mainIndexExists) {
+      setStatus(activity, `query ${i}: copying existing index`);
       await scopedCopyIndex(client, index, tmpIndex);
     }
 
+    setStatus(activity, `query ${i}: executing query`);
     const result = await graphql(query);
     if (result.errors) {
       report.panic(`failed to index to Algolia`, result.errors);
     }
     const objects = transformer(result);
     const chunks = chunk(objects, chunkSize);
+
+    setStatus(activity, `query ${i}: splitting in ${chunks.length} jobs`);
 
     const chunkJobs = chunks.map(async function(chunked) {
       const { taskID } = await indexToUse.addObjects(chunked);
@@ -47,6 +56,7 @@ exports.onPostBuild = async function(
     await Promise.all(chunkJobs);
 
     if (mainIndexExists) {
+      setStatus(activity, `query ${i}: moving copied index to main index`);
       return moveIndex(client, tmpIndex, index);
     }
   });
@@ -101,5 +111,19 @@ async function indexExists(index) {
     return nbHits > 0;
   } catch (e) {
     return false;
+  }
+}
+
+/**
+ * Hotfix the Gatsby reporter to allow setting status (not supported everywhere)
+ * 
+ * @param {Object} activity reporter
+ * @param {String} status status to report
+ */
+function setStatus(activity, status) {
+  if (activity && activity.setStatus) {
+    activity.setStatus(status);
+  } else {
+    console.log('Algolia:', status);
   }
 }
