@@ -24,9 +24,13 @@ exports.onPostBuild = async function(
       report.panic(`failed to index to Algolia. You did not give "query" to this query`)
     }
     const index = client.initIndex(indexName);
+    const mainIndexExists = await indexExists(index);
     const tmpIndex = client.initIndex(`${indexName}_tmp`);
+    const indexToUse = mainIndexExists ? tmpIndex : index;
 
-    await scopedCopyIndex(client, index, tmpIndex);
+    if (mainIndexExists) {
+      await scopedCopyIndex(client, index, tmpIndex);
+    }
 
     const result = await graphql(query);
     if (result.errors) {
@@ -36,13 +40,15 @@ exports.onPostBuild = async function(
     const chunks = chunk(objects, chunkSize);
 
     const chunkJobs = chunks.map(async function(chunked) {
-      const { taskID } = await tmpIndex.addObjects(chunked);
-      return tmpIndex.waitTask(taskID);
+      const { taskID } = await indexToUse.addObjects(chunked);
+      return indexToUse.waitTask(taskID);
     });
 
     await Promise.all(chunkJobs);
 
-    return moveIndex(client, tmpIndex, index);
+    if (mainIndexExists) {
+      return moveIndex(client, tmpIndex, index);
+    }
   });
 
   activity = report.activityTimer(`index to Algolia`);
@@ -84,4 +90,18 @@ async function moveIndex(client, sourceIndex, targetIndex) {
     targetIndex.indexName
   );
   return targetIndex.waitTask(taskID);
+}
+
+/**
+ * Does an Algolia index exist already
+ *
+ * @param index
+ */
+async function indexExists(index) {
+  try {
+    const { nbHits } = await index.search();
+    return nbHits > 0;
+  } catch (e) {
+    return false;
+  }
 }
