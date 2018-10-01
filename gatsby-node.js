@@ -51,8 +51,6 @@ exports.onPostBuild = async function(
     }
   });
 
-  activity = report.activityTimer(`index to Algolia`);
-  activity.start();
   try {
     await Promise.all(jobs);
   } catch (err) {
