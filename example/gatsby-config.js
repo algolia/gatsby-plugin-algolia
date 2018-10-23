@@ -27,8 +27,12 @@ const query = `{
 
 const queries = [
   {
+    indexName: `pages`,
     query,
     transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
+    settings: {
+      attributesToSnippet: ['path:5', 'internal'],
+    },
   },
 ]
 

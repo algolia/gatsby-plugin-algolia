@@ -20,7 +20,7 @@ exports.onPostBuild = async function(
   setStatus(activity, `${queries.length} queries to index`);
 
   const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity },
+    { indexName = mainIndexName, query, transformer = identity, settings },
     i
   ) {
     if (!query) {
@@ -54,6 +54,10 @@ exports.onPostBuild = async function(
     });
 
     await Promise.all(chunkJobs);
+
+    if (settings) {
+      indexToUse.setSettings(settings);
+    }
 
     if (mainIndexExists) {
       setStatus(activity, `query ${i}: moving copied index to main index`);
@@ -116,7 +120,7 @@ async function indexExists(index) {
 
 /**
  * Hotfix the Gatsby reporter to allow setting status (not supported everywhere)
- * 
+ *
  * @param {Object} activity reporter
  * @param {String} status status to report
  */
