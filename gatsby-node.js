@@ -56,7 +56,7 @@ exports.onPostBuild = async function(
     await Promise.all(chunkJobs);
 
     if (settings) {
-      tmpIndex.setSettings(settings);
+      indexToUse.setSettings(settings);
     }
 
     if (mainIndexExists) {
