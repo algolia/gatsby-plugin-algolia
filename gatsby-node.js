@@ -55,9 +55,9 @@ exports.onPostBuild = async function(
 
     await Promise.all(chunkJobs);
 
-    tmpIndex.setSettings(settings, err => {
-      if (err) throw err;
-    });
+    if (settings) {
+      tmpIndex.setSettings(settings);
+    }
 
     if (mainIndexExists) {
       setStatus(activity, `query ${i}: moving copied index to main index`);
