@@ -23,7 +23,7 @@ ALGOLIA_INDEX_NAME=XXX
 ```js
 require('dotenv').config({
   path: `.env.${process.env.NODE_ENV}`,
-})
+});
 
 // gatsby-config.js
 const myQuery = `{
@@ -64,13 +64,55 @@ module.exports = {
       options: {
         appId: process.env.ALGOLIA_APP_ID,
         apiKey: process.env.ALGOLIA_API_KEY,
-        indexName: "index name to target", // for all queries
+        indexName: 'index name to target', // for all queries
         queries,
         chunkSize: 10000, // default: 1000
       },
     },
   ],
 };
+```
+
+# Using variables
+
+Pass object to `queryVariables` containing all your possible variables
+
+```js
+const queries = [
+  {
+    query: myQuery,
+    queryVariables: { exampleVariable: 1 },
+    transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
+    indexName: 'index name to target', // overrides main index name, optional
+  },
+];
+```
+
+Update your query to accept the variable(s)
+
+```js
+const myQuery = `query($exampleVariable: Int!) {
+  allSitePage(skip: $exampleVariable) {
+    edges {
+      node {
+        # try to find a unique id for each node
+        # if this field is absent, it's going to
+        # be inserted by Algolia automatically
+        # and will be less simple to update etc.
+        objectID: id
+        component
+        path
+        componentChunkName
+        jsonName
+        internal {
+          type
+          contentDigest
+          owner
+        }
+      }
+    }
+  }
+}`;
 ```
 
 # Feedback
