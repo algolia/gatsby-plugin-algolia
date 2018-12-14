@@ -20,7 +20,13 @@ exports.onPostBuild = async function(
   setStatus(activity, `${queries.length} queries to index`);
 
   const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity, settings },
+    {
+      indexName = mainIndexName,
+      query,
+      queryVariables,
+      transformer = identity,
+      settings,
+    },
     i
   ) {
     if (!query) {
@@ -39,7 +45,7 @@ exports.onPostBuild = async function(
     }
 
     setStatus(activity, `query ${i}: executing query`);
-    const result = await graphql(query);
+    const result = await graphql(query, queryVariables);
     if (result.errors) {
       report.panic(`failed to index to Algolia`, result.errors);
     }
