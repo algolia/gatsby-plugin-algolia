@@ -54,6 +54,9 @@ const queries = [
     query: myQuery,
     transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
     indexName: 'index name to target', // overrides main index name, optional
+    settings: {
+      // optional, any index settings
+    },
   },
 ];
 
