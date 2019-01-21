@@ -17,6 +17,7 @@ First add credentials to a .env file, which you won't commit. If you track this 
 ```env
 // .env.production
 ALGOLIA_APP_ID=XXX
+ALGOLIA_API_KEY=XXX
 ALGOLIA_INDEX_NAME=XXX
 ```
 
@@ -67,7 +68,7 @@ module.exports = {
       options: {
         appId: process.env.ALGOLIA_APP_ID,
         apiKey: process.env.ALGOLIA_API_KEY,
-        indexName: "index name to target", // for all queries
+        indexName: process.env.ALGOLIA_INDEX_NAME, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
       },
