@@ -86,7 +86,7 @@ By default all records will be reindexed on every build. To enable only indexing
     /* ... */
     enablePartialUpdates: true,
     /* (optional) Fields to use for comparing if the index object is different from the new one */
-    /* By default it uses a field called modified which could be a boolean | datatime string */
+    /* By default it uses a field called "modified" which could be a boolean | datetime string */
     matchFields: ['slug', 'modified'] // Array<String> default: ['modified']
   }
 ```
