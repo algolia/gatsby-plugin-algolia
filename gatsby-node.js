@@ -33,48 +33,6 @@ function fetchAlgoliaObjects(index, attributesToRetrieve) {
   });
 }
 
-
-exports.onPreInit = async function(
-  { graphql },
-  { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000, enablePartialUpdates = false, matchFields: mainMatchFields = ['modified'] }
-) {
-  const activity = report.activityTimer(`Checking Algolia`);
-  activity.start();
-  const client = algoliasearch(appId, apiKey);
-
-  const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity, settings, matchFields = mainMatchFields },
-    i
-  ) {
-    const index = client.initIndex(indexName);
-    /* Use temp index if main index already exists */
-    let useTempIndex = false
-    const indexToUse = await (async function(_index) {
-      if (!enablePartialUpdates) {
-        if (useTempIndex = await indexExists(_index)) {
-          return client.initIndex(`${indexName}_tmp`);
-        }
-      }
-      return _index
-    })(index)
-
-    setStatus(activity, `query ${i}: fetchAlgoliaObjects on ${indexName} index ${useTempIndex}`);
-    algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
-
-    const results = Object.keys(algoliaObjects).length
-
-    setStatus(activity, `query ${i}: found ${results} objects`);
-  })
-
-  try {
-    await Promise.all(jobs);
-  } catch (err) {
-    report.panic(`failed to index to Algolia`, err);
-  }
-
-  activity.end();
-}
-
 exports.onPostBuild = async function(
   { graphql },
   { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000, enablePartialUpdates = false, matchFields: mainMatchFields = ['modified'] }
@@ -85,6 +43,8 @@ exports.onPostBuild = async function(
   const client = algoliasearch(appId, apiKey);
 
   setStatus(activity, `${queries.length} queries to index`);
+
+  const indexState = {}
 
   const jobs = queries.map(async function doQuery(
     { indexName = mainIndexName, query, transformer = identity, settings, matchFields = mainMatchFields },
@@ -113,6 +73,13 @@ exports.onPostBuild = async function(
       return _index
     })(index)
 
+    /* Use to keep track of what to remove afterwards */
+    if (!indexState[indexName]) indexState[indexName] = {
+      index,
+      toRemove: {}
+    }
+    const currentIndexState = indexState[indexName]
+
     setStatus(activity, `query ${i}: executing query`);
     const result = await graphql(query);
     if (result.errors) {
@@ -140,16 +107,21 @@ exports.onPostBuild = async function(
 
       if (results) {
         hasChanged = objects.filter(curObj => {
-          let extObj = algoliaObjects[curObj.objectID]
-          if (!extObj) return true;
+          const ID = curObj.objectID
           /* The object exists so we don't need to remove it from Algolia */
-          delete(algoliaObjects[curObj.objectID]);
+          delete(algoliaObjects[ID]);
+          delete(currentIndexState.toRemove[ID])
+
+          let extObj = algoliaObjects[ID]
+          if (!extObj) return true;
 
           return !!matchFields.find(field => extObj[field] !== curObj[field]);
         });
+
+        Object.keys(algoliaObjects).forEach(({ objectID }) => currentIndexState.toRemove[objectID] = true)
       }
 
-      setStatus(activity, `query ${i}: Partial updates – [insert/update: ${hasChanged.length}, remove: ${Object.keys(algoliaObjects).length}]`);
+      setStatus(activity, `query ${i}: Partial updates – [insert/update: ${hasChanged.length}, total: ${objects.length}]`);
     }
 
     const chunks = chunk(hasChanged, chunkSize);
@@ -161,19 +133,6 @@ exports.onPostBuild = async function(
       const { taskID } = await indexToUse.addObjects(chunked);
       return indexToUse.waitTask(taskID);
     });
-
-    if (enablePartialUpdates) {
-      /* Remove deleted objects */
-      const isRemoved = Object.keys(algoliaObjects);
-      const removeOldObjects = async function(objectIds) {
-        const { taskID } = await indexToUse.deleteObjects(objectIds);
-        return indexToUse.waitTask(taskID);
-      }
-
-      if (isRemoved && isRemoved.length) {
-        chunkJobs.push(removeOldObjects(isRemoved));
-      }
-    }
 
     await Promise.all(chunkJobs);
 
@@ -188,7 +147,24 @@ exports.onPostBuild = async function(
   });
 
   try {
-    await Promise.all(jobs);
+    await Promise.all(jobs)
+
+    if (enablePartialUpdates) {
+      /* Execute once per index */
+      /* This allows multiple queries to overlap */
+      const cleanup = Object.keys(indexState).map(async function(indexName) {
+        const state = indexState[indexName];
+        const isRemoved = Object.keys(state.toRemove);
+
+        if (isRemoved.length) {
+          setStatus(activity, `deleting ${isRemoved.length} object from ${indexName} index`);
+          const { taskID } = await state.index.deleteObjects(isRemoved);
+          return state.index.waitTask(taskID);
+        }
+      })
+
+      await Promise.all(cleanup);
+    }
   } catch (err) {
     report.panic(`failed to index to Algolia`, err);
   }
