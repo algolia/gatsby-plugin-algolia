@@ -33,50 +33,6 @@ function fetchAlgoliaObjects(index, attributesToRetrieve) {
   });
 }
 
-
-async function atest(
-  { graphql },
-  { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000, enablePartialUpdates = false, matchFields: mainMatchFields = ['modified'] }
-) {
-  const activity = report.activityTimer(`Checking Algolia`);
-  activity.start();
-  const client = algoliasearch(appId, apiKey);
-
-  const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity, settings, matchFields = mainMatchFields },
-    i
-  ) {
-    const index = client.initIndex(indexName);
-    /* Use temp index if main index already exists */
-    let useTempIndex = false
-    const indexToUse = await (async function(_index) {
-      if (!enablePartialUpdates) {
-        if (useTempIndex = await indexExists(_index)) {
-          return client.initIndex(`${indexName}_tmp`);
-        }
-      }
-      return _index
-    })(index)
-
-    setStatus(activity, `query ${i}: fetchAlgoliaObjects on ${indexName} index ${useTempIndex}`);
-    algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
-
-    const results = Object.keys(algoliaObjects).length
-
-    setStatus(activity, `query ${i}: found ${results} objects`);
-  })
-
-  try {
-    await Promise.all(jobs);
-  } catch (err) {
-    report.panic(`failed to index to Algolia`, err);
-  }
-
-  activity.end();
-}
-
-exports.onPreInit = atest
-
 exports.onPostBuild = async function(
   { graphql },
   { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000, enablePartialUpdates = false, matchFields: mainMatchFields = ['modified'] }
