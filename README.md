@@ -17,7 +17,6 @@ First add credentials to a .env file, which you won't commit. If you track this 
 ```env
 // .env.production
 ALGOLIA_APP_ID=XXX
-ALGOLIA_API_KEY=XXX
 ALGOLIA_INDEX_NAME=XXX
 ```
 
@@ -55,9 +54,7 @@ const queries = [
     query: myQuery,
     transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
     indexName: 'index name to target', // overrides main index name, optional
-    settings: {
-      // optional, any index settings
-    },
+    matchFields: ['slug', 'modified'], // Array<String> overrides main match fields, optional
   },
 ];
 
@@ -68,14 +65,32 @@ module.exports = {
       options: {
         appId: process.env.ALGOLIA_APP_ID,
         apiKey: process.env.ALGOLIA_API_KEY,
-        indexName: process.env.ALGOLIA_INDEX_NAME, // for all queries
+        indexName: "index name to target", // for all queries
         queries,
         chunkSize: 10000, // default: 1000
+        enablePartialUpdates: true, // default: false
+        matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
       },
     },
   ],
 };
 ```
+
+# Partial Updates `v0.4.0`
+
+By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in settings:
+
+```
+  enablePartialUpdates: true,
+  /* (optional) Fields to use for comparing if the index object is different from the new one */
+  /* By default it uses a field called modified which could be a boolean | datatime string */
+  matchFields: ['slug', 'modified'] // Array<String> default: ['modified']
+```
+
+### Advanced
+
+You can also specify `matchFields` per query to check for different fields based on the type of objects you are indexing.
+
 
 # Feedback
 

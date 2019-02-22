@@ -9,18 +9,43 @@ const report = require('gatsby-cli/lib/reporter');
  */
 const identity = obj => obj;
 
+/**
+ * Fetches all records for the current index from Algolia
+ *
+ * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
+ * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
+ */
+
+function fetchAlgoliaObjects(index, attributesToRetrieve) {
+  return new Promise((resolve, reject) => {
+    const browser = index.browseAll('', { attributesToRetrieve });
+    const hits = {};
+
+    browser.on('result', (content) => {
+      if (Array.isArray(content.hits)) {
+        content.hits.forEach(hit => {
+          hits[hit.objectID] = hit
+        })
+      }
+    });
+    browser.on('end', () => resolve(hits) );
+    browser.on('error', (err) => reject(err) );
+  });
+}
+
 exports.onPostBuild = async function(
   { graphql },
-  { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000 }
+  { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000, enablePartialUpdates = false, matchFields: mainMatchFields = ['modified'] }
 ) {
   const activity = report.activityTimer(`index to Algolia`);
   activity.start();
+
   const client = algoliasearch(appId, apiKey);
 
   setStatus(activity, `${queries.length} queries to index`);
 
   const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity, settings },
+    { indexName = mainIndexName, query, transformer = identity, settings, matchFields = mainMatchFields },
     i
   ) {
     if (!query) {
@@ -28,6 +53,12 @@ exports.onPostBuild = async function(
         `failed to index to Algolia. You did not give "query" to this query`
       );
     }
+    if (!Array.isArray(matchFields) || !matchFields.length) {
+      return report.panic(
+        `failed to index to Algolia. Argument matchFields has to be an array of strings`
+      );
+    }
+
     const index = client.initIndex(indexName);
     const mainIndexExists = await indexExists(index);
     const tmpIndex = client.initIndex(`${indexName}_tmp`);
@@ -44,14 +75,58 @@ exports.onPostBuild = async function(
       report.panic(`failed to index to Algolia`, result.errors);
     }
     const objects = transformer(result);
-    const chunks = chunk(objects, chunkSize);
+
+    if (objects.length > 0 && !objects[0].objectID) {
+      report.panic(
+        `failed to index to Algolia. Query results do not have 'objectID' key`
+      );
+    }
+
+    setStatus(activity, `query ${i}: graphql resulted in ${Object.keys(objects).length} records`);
+
+    let hasChanged = objects;
+    let algoliaObjects = {}
+    const queryIndex = `${indexName}-${i}`;
+    if (enablePartialUpdates) {
+      setStatus(activity, `query ${i}: starting Partial updates`);
+
+      algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
+      setStatus(activity, `query ${i}: found ${Object.keys(algoliaObjects).length} existing records`);
+
+      hasChanged = objects.filter(curObj => {
+        let extObj = algoliaObjects[curObj.objectID]
+        if (!extObj) return true;
+        /* The object exists so we don't need to remove it from Algolia */
+        delete(algoliaObjects[curObj.objectID]);
+
+        return !!matchFields.find(field => extObj[field] !== curObj[field]);
+      });
+
+      setStatus(activity, `query ${i}: Partial updates – [insert/update: ${hasChanged.length}, remove: ${Object.keys(algoliaObjects).length}]`);
+    }
+
+    const chunks = chunk(hasChanged, chunkSize);
 
     setStatus(activity, `query ${i}: splitting in ${chunks.length} jobs`);
 
+    /* Add changed / new objects */
     const chunkJobs = chunks.map(async function(chunked) {
       const { taskID } = await indexToUse.addObjects(chunked);
       return indexToUse.waitTask(taskID);
     });
+
+    if (enablePartialUpdates) {
+      /* Remove deleted objects */
+      const isRemoved = Object.keys(algoliaObjects);
+      const removeOldObjects = async function(objectIds) {
+        const { taskID } = await indexToUse.deleteObjects(objectIds);
+        return indexToUse.waitTask(taskID);
+      }
+
+      if (isRemoved && isRemoved.length) {
+        chunkJobs.push(removeOldObjects(isRemoved));
+      }
+    }
 
     await Promise.all(chunkJobs);
 
