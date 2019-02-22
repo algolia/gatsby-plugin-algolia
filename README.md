@@ -20,7 +20,7 @@ ALGOLIA_APP_ID=XXX
 ALGOLIA_INDEX_NAME=XXX
 ```
 
-```js
+```javascript:title=gatsby-config.js
 require('dotenv').config({
   path: `.env.${process.env.NODE_ENV}`,
 })
@@ -78,14 +78,20 @@ module.exports = {
 
 # Partial Updates `v0.4.0`
 
-By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in settings:
+By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in the options of the plugin:
 
+```javascript:title=gatsby-config.js
+  resolve: `gatsby-plugin-algolia`,
+  options: {
+    /* ... */
+    enablePartialUpdates: true,
+    /* (optional) Fields to use for comparing if the index object is different from the new one */
+    /* By default it uses a field called modified which could be a boolean | datatime string */
+    matchFields: ['slug', 'modified'] // Array<String> default: ['modified']
+  }
 ```
-  enablePartialUpdates: true,
-  /* (optional) Fields to use for comparing if the index object is different from the new one */
-  /* By default it uses a field called modified which could be a boolean | datatime string */
-  matchFields: ['slug', 'modified'] // Array<String> default: ['modified']
-```
+
+This saves a lot of
 
 ### Advanced
 
