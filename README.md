@@ -17,6 +17,7 @@ First add credentials to a .env file, which you won't commit. If you track this 
 ```env
 // .env.production
 ALGOLIA_APP_ID=XXX
+ALGOLIA_APP_KEY=XXX
 ALGOLIA_INDEX_NAME=XXX
 ```
 
@@ -68,6 +69,9 @@ module.exports = {
         indexName: "index name to target", // for all queries
         queries,
         chunkSize: 10000, // default: 1000
+        settings: {
+          // optional, any index settings
+        },
         enablePartialUpdates: true, // default: false
         matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
       },
@@ -76,7 +80,7 @@ module.exports = {
 };
 ```
 
-# Partial Updates `v0.4.0`
+## Partial Updates `v0.4.0`
 
 By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in the options of the plugin:
 
