@@ -72,6 +72,9 @@ module.exports = {
         indexName: "index name to target", // for all queries
         queries,
         chunkSize: 10000, // default: 1000
+        settings: {
+          // optional, any index settings
+        },
         enablePartialUpdates: true, // default: false
         matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
       },
@@ -80,7 +83,7 @@ module.exports = {
 };
 ```
 
-# Partial Updates `v0.4.0`
+## Partial Updates `v0.4.0`
 
 By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in the options of the plugin:
 
@@ -90,7 +93,7 @@ By default all records will be reindexed on every build. To enable only indexing
     /* ... */
     enablePartialUpdates: true,
     /* (optional) Fields to use for comparing if the index object is different from the new one */
-    /* By default it uses a field called modified which could be a boolean | datatime string */
+    /* By default it uses a field called "modified" which could be a boolean | datetime string */
     matchFields: ['slug', 'modified'] // Array<String> default: ['modified']
   }
 ```
