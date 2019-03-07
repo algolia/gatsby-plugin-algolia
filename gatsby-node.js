@@ -15,7 +15,6 @@ const identity = obj => obj;
  * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
  * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
  */
-
 function fetchAlgoliaObjects(index, attributesToRetrieve) {
   return new Promise((resolve, reject) => {
     const browser = index.browseAll('', { attributesToRetrieve: ['modified'] });

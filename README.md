@@ -17,10 +17,11 @@ First add credentials to a .env file, which you won't commit. If you track this 
 ```env
 // .env.production
 ALGOLIA_APP_ID=XXX
+ALGOLIA_API_KEY=XXX
 ALGOLIA_INDEX_NAME=XXX
 ```
 
-```javascript:title=gatsby-config.js
+```js
 require('dotenv').config({
   path: `.env.${process.env.NODE_ENV}`,
 })
@@ -54,6 +55,9 @@ const queries = [
     query: myQuery,
     transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
     indexName: 'index name to target', // overrides main index name, optional
+    settings: {
+      // optional, any index settings
+    },
     matchFields: ['slug', 'modified'], // Array<String> overrides main match fields, optional
   },
 ];
@@ -80,7 +84,7 @@ module.exports = {
 
 By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in the options of the plugin:
 
-```javascript:title=gatsby-config.js
+```js
   resolve: `gatsby-plugin-algolia`,
   options: {
     /* ... */
@@ -91,7 +95,7 @@ By default all records will be reindexed on every build. To enable only indexing
   }
 ```
 
-This saves a lot of
+This saves a lot of Algolia operations since you don't reindex everything on everybuild.
 
 ### Advanced
 
