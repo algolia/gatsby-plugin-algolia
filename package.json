@@ -24,6 +24,7 @@
     "release": "standard-version"
   },
   "files": [
+    "index.js",
     "gatsby-node.js"
   ]
 }
