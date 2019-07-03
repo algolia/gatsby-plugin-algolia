@@ -22,5 +22,8 @@
   },
   "scripts": {
     "release": "standard-version"
-  }
+  },
+  "files": [
+    "gatsby-node.js"
+  ]
 }
