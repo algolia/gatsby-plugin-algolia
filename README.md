@@ -8,13 +8,13 @@ You can specify a list of queries to run and how to transform them into an array
 
 Here we have an example with some data that might not be very relevant, but will work with the default configuration of `gatsby new`
 
-```sh
+```shell
 $ yarn add gatsby-plugin-algolia
 ```
 
 First add credentials to a .env file, which you won't commit. If you track this in your file, and especially if the site is open source, you will leak your admin API key. This would mean anyone is able to change anything on your Algolia index.
 
-```env
+```
 // .env.production
 ALGOLIA_APP_ID=XXX
 ALGOLIA_API_KEY=XXX
