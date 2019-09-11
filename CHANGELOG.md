@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.3.4"></a>
+## [0.3.4](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.3.3...v0.3.4) (2019-09-11)
+
+### Bug Fixes
+
+* **settings**: await settings to be sent before moving indices ([231221e](https://github.com/algolia/gatsby-plugin-algolia/commit/231221e)), closes [#37](https://github.com/algolia/gatsby-plugin-algolia/issues/37)
+
 <a name="0.3.3"></a>
 ## [0.3.3](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.3.2...v0.3.3) (2019-08-12)
 
