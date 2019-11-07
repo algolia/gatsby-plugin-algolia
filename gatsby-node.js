@@ -43,7 +43,7 @@ exports.onPostBuild = async function(
     if (result.errors) {
       report.panic(`failed to index to Algolia`, result.errors);
     }
-    const objects = transformer(result);
+    const objects = await transformer(result);
     const chunks = chunk(objects, chunkSize);
 
     setStatus(activity, `query ${i}: splitting in ${chunks.length} jobs`);

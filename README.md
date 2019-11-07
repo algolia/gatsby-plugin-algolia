@@ -77,6 +77,8 @@ module.exports = {
 };
 ```
 
+The `transformer` field accepts a function and optionally you may provide an `async` function.
+
 # Feedback
 
 This is the very first version of our plugin and isn't yet officially supported. Please leave all your feedback in GitHub issues 😊
