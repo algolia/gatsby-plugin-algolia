@@ -79,6 +79,8 @@ module.exports = {
 
 The `transformer` field accepts a function and optionally you may provide an `async` function.
 
+The index will be synchronised with the provided index name on Algolia on the `build` step in Gatsby. This is not done earlier to prevent you going over quota while developing.
+
 # Feedback
 
 This is the very first version of our plugin and isn't yet officially supported. Please leave all your feedback in GitHub issues 😊
