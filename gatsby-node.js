@@ -56,7 +56,8 @@ exports.onPostBuild = async function(
     await Promise.all(chunkJobs);
 
     if (settings) {
-      await indexToUse.setSettings(settings);
+      const { taskID } = await indexToUse.setSettings(settings);
+      await indexToUse.waitTask(taskID);
     }
 
     if (mainIndexExists) {
