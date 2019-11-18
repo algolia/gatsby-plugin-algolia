@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.5.0"></a>
+# [0.5.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.4.0...v0.5.0) (2019-11-18)
+
+
+### Bug Fixes
+
+* **settings:** wait for task to finish ([67f4e46](https://github.com/algolia/gatsby-plugin-algolia/commit/67f4e46))
+
+
+### BREAKING CHANGES
+
+* **settings:** indexing will take a slight bit longer if settings are applied to be more sure we don't set settings on the wrong index.
+
+
+
 <a name="0.4.0"></a>
 # [0.4.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.3.4...v0.4.0) (2019-11-07)
 
