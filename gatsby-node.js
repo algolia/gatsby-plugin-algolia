@@ -110,13 +110,16 @@ async function moveIndex(client, sourceIndex, targetIndex) {
  *
  * @param index
  */
-async function indexExists(index) {
-  try {
-    const { nbHits } = await index.search();
-    return nbHits > 0;
-  } catch (e) {
-    return false;
-  }
+function indexExists(index) {
+  return index.getSettings()
+    .then(() => true)
+    .catch(error => {
+      if (error.status !== 404) {
+        throw error;
+      }
+
+      return false;
+    });
 }
 
 /**
