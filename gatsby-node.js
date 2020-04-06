@@ -65,12 +65,13 @@ exports.onPostBuild = async function(
     await Promise.all(chunkJobs);
 
     if (settings) {
+      // Account for forwardToReplicas:
       const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
 
       let adjustedSettings = {};
+      
+      // If we're building replicas, we don't want to add them to temporary indices
       if (currentIndexIsTempIndex && settings.hasOwnProperty('replicas')) {
-        // if settings has `replicas` and indexToUse is a temp
-        // don't add the replicas array to the index
         const { replicas, ...rest } = settings;
         adjustedSettings = { ...rest };
       } else {
