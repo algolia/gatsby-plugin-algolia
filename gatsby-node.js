@@ -43,7 +43,7 @@ exports.onPostBuild = async function(
     if (result.errors) {
       report.panic(`failed to index to Algolia`, result.errors);
     }
-    const objects = transformer(result);
+    const objects = await transformer(result);
     const chunks = chunk(objects, chunkSize);
 
     setStatus(activity, `query ${i}: splitting in ${chunks.length} jobs`);
@@ -56,7 +56,8 @@ exports.onPostBuild = async function(
     await Promise.all(chunkJobs);
 
     if (settings) {
-      await indexToUse.setSettings(settings);
+      const { taskID } = await indexToUse.setSettings(settings);
+      await indexToUse.waitTask(taskID);
     }
 
     if (mainIndexExists) {
@@ -109,13 +110,16 @@ async function moveIndex(client, sourceIndex, targetIndex) {
  *
  * @param index
  */
-async function indexExists(index) {
-  try {
-    const { nbHits } = await index.search();
-    return nbHits > 0;
-  } catch (e) {
-    return false;
-  }
+function indexExists(index) {
+  return index.getSettings()
+    .then(() => true)
+    .catch(error => {
+      if (error.status !== 404) {
+        throw error;
+      }
+
+      return false;
+    });
 }
 
 /**

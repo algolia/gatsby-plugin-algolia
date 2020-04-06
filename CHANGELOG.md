@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.6.0"></a>
+# [0.6.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.5.0...v0.6.0) (2020-04-01)
+
+
+### Features
+
+* **exists:** prevent empty index from being overridden ([e587abe](https://github.com/algolia/gatsby-plugin-algolia/commit/e587abe))
+
+
+
+<a name="0.5.0"></a>
+# [0.5.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.4.0...v0.5.0) (2019-11-18)
+
+
+### Bug Fixes
+
+* **settings:** wait for task to finish ([67f4e46](https://github.com/algolia/gatsby-plugin-algolia/commit/67f4e46))
+
+
+### BREAKING CHANGES
+
+* **settings:** indexing will take a slight bit longer if settings are applied to be more sure we don't set settings on the wrong index.
+
+
+
+<a name="0.4.0"></a>
+# [0.4.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.3.4...v0.4.0) (2019-11-07)
+
+
+### Features
+
+* **transformer:** Wait for me! 🙋‍♂️ Ability to await the data transformer ([#40](https://github.com/algolia/gatsby-plugin-algolia/issues/40)) ([d47e35f](https://github.com/algolia/gatsby-plugin-algolia/commit/d47e35f)), closes [#25](https://github.com/algolia/gatsby-plugin-algolia/issues/25)
+
+
+
+<a name="0.3.4"></a>
+## [0.3.4](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.3.3...v0.3.4) (2019-09-11)
+
+### Bug Fixes
+
+* **settings**: await settings to be sent before moving indices ([231221e](https://github.com/algolia/gatsby-plugin-algolia/commit/231221e)), closes [#37](https://github.com/algolia/gatsby-plugin-algolia/issues/37)
+
 <a name="0.3.3"></a>
 ## [0.3.3](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.3.2...v0.3.3) (2019-08-12)
 
