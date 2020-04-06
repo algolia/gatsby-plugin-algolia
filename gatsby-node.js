@@ -20,7 +20,7 @@ exports.onPostBuild = async function(
   setStatus(activity, `${queries.length} queries to index`);
 
   const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity, settings },
+    { indexName = mainIndexName, query, transformer = identity, settings, forwardToReplicas },
     i
   ) {
     if (!query) {
@@ -28,10 +28,19 @@ exports.onPostBuild = async function(
         `failed to index to Algolia. You did not give "query" to this query`
       );
     }
+    let currentIndexIsTempIndex;
     const index = client.initIndex(indexName);
     const mainIndexExists = await indexExists(index);
     const tmpIndex = client.initIndex(`${indexName}_tmp`);
-    const indexToUse = mainIndexExists ? tmpIndex : index;
+    let indexToUse;
+
+    if (mainIndexExists) {
+      indexToUse = tmpIndex;
+      currentIndexIsTempIndex = true;
+    } else {
+      indexToUse = index;
+      currentIndexIsTempIndex = false;
+    }
 
     if (mainIndexExists) {
       setStatus(activity, `query ${i}: copying existing index`);
@@ -56,7 +65,22 @@ exports.onPostBuild = async function(
     await Promise.all(chunkJobs);
 
     if (settings) {
-      const { taskID } = await indexToUse.setSettings(settings);
+      const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
+
+      let adjustedSettings = {};
+      if (currentIndexIsTempIndex && settings.hasOwnProperty('replicas')) {
+        // if settings has `replicas` and indexToUse is a temp
+        // don't add the replicas array to the index
+        const { replicas, ...rest } = settings;
+        adjustedSettings = { ...rest };
+      } else {
+        adjustedSettings = settings;
+      }
+
+      const { taskID } = await indexToUse.setSettings(
+        adjustedSettings,
+        extraModifiers
+      );
       await indexToUse.waitTask(taskID);
     }
 
