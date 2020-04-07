@@ -20,7 +20,13 @@ exports.onPostBuild = async function(
   setStatus(activity, `${queries.length} queries to index`);
 
   const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity, settings, forwardToReplicas },
+    {
+      indexName = mainIndexName,
+      query,
+      transformer = identity,
+      settings,
+      forwardToReplicas,
+    },
     i
   ) {
     if (!query) {
@@ -69,7 +75,7 @@ exports.onPostBuild = async function(
       const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
 
       let adjustedSettings = {};
-      
+
       // If we're building replicas, we don't want to add them to temporary indices
       if (currentIndexIsTempIndex && settings.hasOwnProperty('replicas')) {
         const { replicas, ...rest } = settings;
@@ -136,10 +142,11 @@ async function moveIndex(client, sourceIndex, targetIndex) {
  * @param index
  */
 function indexExists(index) {
-  return index.getSettings()
+  return index
+    .getSettings()
     .then(() => true)
     .catch(error => {
-      if (error.status !== 404) {
+      if (error.statusCode !== 404) {
         throw error;
       }
 
