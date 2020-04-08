@@ -34,19 +34,10 @@ exports.onPostBuild = async function(
         `failed to index to Algolia. You did not give "query" to this query`
       );
     }
-    let currentIndexIsTempIndex;
     const index = client.initIndex(indexName);
     const mainIndexExists = await indexExists(index);
     const tmpIndex = client.initIndex(`${indexName}_tmp`);
-    let indexToUse;
-
-    if (mainIndexExists) {
-      indexToUse = tmpIndex;
-      currentIndexIsTempIndex = true;
-    } else {
-      indexToUse = index;
-      currentIndexIsTempIndex = false;
-    }
+    let indexToUse = mainIndexExists ? tmpIndex : index;
 
     if (mainIndexExists) {
       setStatus(activity, `query ${i}: copying existing index`);
@@ -74,14 +65,12 @@ exports.onPostBuild = async function(
       // Account for forwardToReplicas:
       const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
 
-      let adjustedSettings = {};
+      let adjustedSettings = settings;
 
       // If we're building replicas, we don't want to add them to temporary indices
-      if (currentIndexIsTempIndex && settings.hasOwnProperty('replicas')) {
+      if (indexToUse === tmpIndex && settings.hasOwnProperty('replicas')) {
         const { replicas, ...rest } = settings;
         adjustedSettings = { ...rest };
-      } else {
-        adjustedSettings = settings;
       }
 
       const { taskID } = await indexToUse.setSettings(
