@@ -37,7 +37,7 @@ exports.onPostBuild = async function(
     const index = client.initIndex(indexName);
     const mainIndexExists = await indexExists(index);
     const tmpIndex = client.initIndex(`${indexName}_tmp`);
-    let indexToUse = mainIndexExists ? tmpIndex : index;
+    const indexToUse = mainIndexExists ? tmpIndex : index;
 
     if (mainIndexExists) {
       setStatus(activity, `query ${i}: copying existing index`);
@@ -66,7 +66,7 @@ exports.onPostBuild = async function(
       const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
 
       const { replicas, ...rest } = settings;
-      
+
       let adjustedSettings = settings;
 
       // If we're building replicas, we don't want to add them to temporary indices
