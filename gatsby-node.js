@@ -20,7 +20,13 @@ exports.onPostBuild = async function(
   setStatus(activity, `${queries.length} queries to index`);
 
   const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity, settings },
+    {
+      indexName = mainIndexName,
+      query,
+      transformer = identity,
+      settings,
+      forwardToReplicas,
+    },
     i
   ) {
     if (!query) {
@@ -56,7 +62,17 @@ exports.onPostBuild = async function(
     await Promise.all(chunkJobs);
 
     if (settings) {
-      const { taskID } = await indexToUse.setSettings(settings);
+      // Account for forwardToReplicas:
+      const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
+
+      // If we're building replicas, we don't want to add them to temporary indices
+      const { replicas, ...adjustedSettings } = settings;
+
+      const { taskID } = await indexToUse.setSettings(
+        indexToUse === tmpIndex ? adjustedSettings : settings,
+        extraModifiers
+      );
+      
       await indexToUse.waitTask(taskID);
     }
 
@@ -111,10 +127,11 @@ async function moveIndex(client, sourceIndex, targetIndex) {
  * @param index
  */
 function indexExists(index) {
-  return index.getSettings()
+  return index
+    .getSettings()
     .then(() => true)
     .catch(error => {
-      if (error.status !== 404) {
+      if (error.statusCode !== 404) {
         throw error;
       }
 
