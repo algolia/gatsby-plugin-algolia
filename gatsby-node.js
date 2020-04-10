@@ -65,19 +65,14 @@ exports.onPostBuild = async function(
       // Account for forwardToReplicas:
       const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
 
-      const { replicas, ...rest } = settings;
-
-      let adjustedSettings = settings;
-
       // If we're building replicas, we don't want to add them to temporary indices
-      if (indexToUse === tmpIndex) {
-        adjustedSettings = { ...rest };
-      }
+      const { replicas, ...adjustedSettings } = settings;
 
       const { taskID } = await indexToUse.setSettings(
-        adjustedSettings,
+        indexToUse === tmpIndex ? adjustedSettings : settings,
         extraModifiers
       );
+      
       await indexToUse.waitTask(taskID);
     }
 
