@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.7.0"></a>
+# [0.7.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.6.0...v0.7.0) (2020-04-10)
+
+
+### Features
+
+* **replica:** prevent temporary indices to have replicas ([#51](https://github.com/algolia/gatsby-plugin-algolia/issues/51)) ([b3e6fad](https://github.com/algolia/gatsby-plugin-algolia/commit/b3e6fad))
+
+
+
 <a name="0.6.0"></a>
 # [0.6.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.5.0...v0.6.0) (2020-04-01)
 
