@@ -1,6 +1,6 @@
 {
   "name": "gatsby-plugin-algolia",
-  "version": "0.3.0",
+  "version": "0.7.0",
   "keywords": [
     "gatsby",
     "search",
@@ -22,5 +22,9 @@
   },
   "scripts": {
     "release": "standard-version"
-  }
+  },
+  "files": [
+    "index.js",
+    "gatsby-node.js"
+  ]
 }

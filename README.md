@@ -8,13 +8,13 @@ You can specify a list of queries to run and how to transform them into an array
 
 Here we have an example with some data that might not be very relevant, but will work with the default configuration of `gatsby new`
 
-```sh
+```shell
 $ yarn add gatsby-plugin-algolia
 ```
 
 First add credentials to a .env file, which you won't commit. If you track this in your file, and especially if the site is open source, you will leak your admin API key. This would mean anyone is able to change anything on your Algolia index.
 
-```env
+```
 // .env.production
 ALGOLIA_APP_ID=XXX
 ALGOLIA_API_KEY=XXX
@@ -83,7 +83,10 @@ module.exports = {
 };
 ```
 
-## Partial Updates `v0.4.0`
+The index will be synchronised with the provided index name on Algolia on the `build` step in Gatsby. This is not done earlier to prevent you going over quota while developing.
+
+
+## Partial Updates
 
 By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in the options of the plugin:
 
@@ -104,6 +107,7 @@ This saves a lot of Algolia operations since you don't reindex everything on eve
 
 You can also specify `matchFields` per query to check for different fields based on the type of objects you are indexing.
 
+The `transformer` field accepts a function and optionally you may provide an `async` function.
 
 # Feedback
 

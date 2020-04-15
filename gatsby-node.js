@@ -46,7 +46,14 @@ exports.onPostBuild = async function(
   const indexState = {}
 
   const jobs = queries.map(async function doQuery(
-    { indexName = mainIndexName, query, transformer = identity, settings, matchFields = mainMatchFields },
+    {
+      indexName = mainIndexName,
+      query,
+      transformer = identity,
+      settings,
+      forwardToReplicas,
+      matchFields = mainMatchFields,
+    },
     i
   ) {
     if (!query) {
@@ -84,7 +91,8 @@ exports.onPostBuild = async function(
     if (result.errors) {
       report.panic(`failed to index to Algolia`, result.errors);
     }
-    const objects = transformer(result);
+
+    const objects = await transformer(result);
 
     if (objects.length > 0 && !objects[0].objectID) {
       report.panic(
@@ -137,7 +145,18 @@ exports.onPostBuild = async function(
     await Promise.all(chunkJobs);
 
     if (settings) {
-      indexToUse.setSettings(settings);
+      // Account for forwardToReplicas:
+      const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
+
+      // If we're building replicas, we don't want to add them to temporary indices
+      const { replicas, ...adjustedSettings } = settings;
+
+      const { taskID } = await indexToUse.setSettings(
+        indexToUse === tmpIndex ? adjustedSettings : settings,
+        extraModifiers
+      );
+      
+      await indexToUse.waitTask(taskID);
     }
 
     if (useTempIndex) {
@@ -207,13 +226,17 @@ async function moveIndex(client, sourceIndex, targetIndex) {
  *
  * @param index
  */
-async function indexExists(index) {
-  try {
-    const { nbHits } = await index.search();
-    return nbHits > 0;
-  } catch (e) {
-    return false;
-  }
+function indexExists(index) {
+  return index
+    .getSettings()
+    .then(() => true)
+    .catch(error => {
+      if (error.statusCode !== 404) {
+        throw error;
+      }
+
+      return false;
+    });
 }
 
 /**
