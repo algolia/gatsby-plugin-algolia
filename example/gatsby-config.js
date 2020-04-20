@@ -11,6 +11,7 @@ const query = `{
         # be inserted by Algolia automatically
         # and will be less simple to update etc.
         objectID: id
+        updated
         component
         path
         componentChunkName
@@ -52,6 +53,8 @@ module.exports = {
         indexName: process.env.ALGOLIA_INDEXNAME, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
+        enablePartialUpdates: true, // default: true
+        matchFields: ['matchFields'],
       },
     },
   ],
