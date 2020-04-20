@@ -68,8 +68,10 @@ module.exports = {
       resolve: `gatsby-plugin-algolia`,
       options: {
         appId: process.env.ALGOLIA_APP_ID,
+        // Careful, no not prefix this with GATSBY_, since that way users can change
+        // the data in the index.
         apiKey: process.env.ALGOLIA_API_KEY,
-        indexName: "index name to target", // for all queries
+        indexName: process.env.ALGOLIA_API_KEY, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
         settings: {
@@ -107,7 +109,9 @@ This saves a lot of Algolia operations since you don't reindex everything on eve
 
 You can also specify `matchFields` per query to check for different fields based on the type of objects you are indexing.
 
-The `transformer` field accepts a function and optionally you may provide an `async` function.
+## Transformer
+
+The `transformer` field accepts a function and optionally you may provide an `async` function. This is useful when you want to change e.g. "edges.node" to simply an array.
 
 # Feedback
 

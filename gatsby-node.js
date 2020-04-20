@@ -7,7 +7,7 @@ const report = require('gatsby-cli/lib/reporter');
  *
  * @param {any} obj what to keep the same
  */
-const identity = obj => obj;
+const identity = (obj) => obj;
 
 /**
  * Fetches all records for the current index from Algolia
@@ -22,19 +22,27 @@ function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
 
     browser.on('result', (content) => {
       if (Array.isArray(content.hits)) {
-        content.hits.forEach(hit => {
-          hits[hit.objectID] = hit
-        })
+        content.hits.forEach((hit) => {
+          hits[hit.objectID] = hit;
+        });
       }
     });
-    browser.on('end', () => resolve(hits) );
-    browser.on('error', (err) => reject(err) );
+    browser.on('end', () => resolve(hits));
+    browser.on('error', (err) => reject(err));
   });
 }
 
-exports.onPostBuild = async function(
+exports.onPostBuild = async function (
   { graphql },
-  { appId, apiKey, queries, indexName: mainIndexName, chunkSize = 1000, enablePartialUpdates = false, matchFields: mainMatchFields = ['modified'] }
+  {
+    appId,
+    apiKey,
+    queries,
+    indexName: mainIndexName,
+    chunkSize = 1000,
+    enablePartialUpdates = false,
+    matchFields: mainMatchFields = ['modified'],
+  }
 ) {
   const activity = report.activityTimer(`index to Algolia`);
   activity.start();
@@ -43,7 +51,7 @@ exports.onPostBuild = async function(
 
   setStatus(activity, `${queries.length} queries to index`);
 
-  const indexState = {}
+  const indexState = {};
 
   const jobs = queries.map(async function doQuery(
     {
@@ -68,23 +76,21 @@ exports.onPostBuild = async function(
     }
 
     const index = client.initIndex(indexName);
-    /* Use temp index if main index already exists */
-    let useTempIndex = false
-    const indexToUse = await (async function(_index) {
-      if (!enablePartialUpdates) {
-        if (useTempIndex = await indexExists(_index)) {
-          return client.initIndex(`${indexName}_tmp`);
-        }
-      }
-      return _index
-    })(index)
+    const tempIndex = client.initIndex(`${indexName}_tmp`);
+    const indexToUse = await getIndexToUse({
+      index,
+      tempIndex,
+      enablePartialUpdates,
+    });
 
     /* Use to keep track of what to remove afterwards */
-    if (!indexState[indexName]) indexState[indexName] = {
-      index,
-      toRemove: {}
+    if (!indexState[indexName]) {
+      indexState[indexName] = {
+        index,
+        toRemove: {},
+      };
     }
-    const currentIndexState = indexState[indexName]
+    const currentIndexState = indexState[indexName];
 
     setStatus(activity, `query ${i}: executing query`);
     const result = await graphql(query);
@@ -100,36 +106,47 @@ exports.onPostBuild = async function(
       );
     }
 
-    setStatus(activity, `query ${i}: graphql resulted in ${Object.keys(objects).length} records`);
+    setStatus(
+      activity,
+      `query ${i}: graphql resulted in ${Object.keys(objects).length} records`
+    );
 
     let hasChanged = objects;
-    let algoliaObjects = {}
+    let algoliaObjects = {};
     if (enablePartialUpdates) {
       setStatus(activity, `query ${i}: starting Partial updates`);
 
       algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
 
-      const results = Object.keys(algoliaObjects).length
-      setStatus(activity, `query ${i}: found ${results} existing records`);
+      const nbMatchedRecords = Object.keys(algoliaObjects).length;
+      setStatus(
+        activity,
+        `query ${i}: found ${nbMatchedRecords} existing records`
+      );
 
-      if (results) {
-        hasChanged = objects.filter(curObj => {
-          const ID = curObj.objectID
-          let extObj = algoliaObjects[ID]
+      if (nbMatchedRecords) {
+        hasChanged = objects.filter((curObj) => {
+          const ID = curObj.objectID;
+          let extObj = algoliaObjects[ID];
 
           /* The object exists so we don't need to remove it from Algolia */
-          delete(algoliaObjects[ID]);
-          delete(currentIndexState.toRemove[ID])
+          delete algoliaObjects[ID];
+          delete currentIndexState.toRemove[ID];
 
           if (!extObj) return true;
 
-          return !!matchFields.find(field => extObj[field] !== curObj[field]);
+          return !!matchFields.find((field) => extObj[field] !== curObj[field]);
         });
 
-        Object.keys(algoliaObjects).forEach(({ objectID }) => currentIndexState.toRemove[objectID] = true)
+        Object.keys(algoliaObjects).forEach(
+          ({ objectID }) => (currentIndexState.toRemove[objectID] = true)
+        );
       }
 
-      setStatus(activity, `query ${i}: Partial updates – [insert/update: ${hasChanged.length}, total: ${objects.length}]`);
+      setStatus(
+        activity,
+        `query ${i}: Partial updates – [insert/update: ${hasChanged.length}, total: ${objects.length}]`
+      );
     }
 
     const chunks = chunk(hasChanged, chunkSize);
@@ -137,7 +154,7 @@ exports.onPostBuild = async function(
     setStatus(activity, `query ${i}: splitting in ${chunks.length} jobs`);
 
     /* Add changed / new objects */
-    const chunkJobs = chunks.map(async function(chunked) {
+    const chunkJobs = chunks.map(async function (chunked) {
       const { taskID } = await indexToUse.addObjects(chunked);
       return indexToUse.waitTask(taskID);
     });
@@ -152,35 +169,38 @@ exports.onPostBuild = async function(
       const { replicas, ...adjustedSettings } = settings;
 
       const { taskID } = await indexToUse.setSettings(
-        indexToUse === tmpIndex ? adjustedSettings : settings,
+        indexToUse === tempIndex ? adjustedSettings : settings,
         extraModifiers
       );
-      
+
       await indexToUse.waitTask(taskID);
     }
 
-    if (useTempIndex) {
+    if (indexToUse === tempIndex) {
       setStatus(activity, `query ${i}: moving copied index to main index`);
       return moveIndex(client, indexToUse, index);
     }
   });
 
   try {
-    await Promise.all(jobs)
+    await Promise.all(jobs);
 
     if (enablePartialUpdates) {
       /* Execute once per index */
       /* This allows multiple queries to overlap */
-      const cleanup = Object.keys(indexState).map(async function(indexName) {
+      const cleanup = Object.keys(indexState).map(async function (indexName) {
         const state = indexState[indexName];
         const isRemoved = Object.keys(state.toRemove);
 
         if (isRemoved.length) {
-          setStatus(activity, `deleting ${isRemoved.length} object from ${indexName} index`);
+          setStatus(
+            activity,
+            `deleting ${isRemoved.length} objects from ${indexName} index`
+          );
           const { taskID } = await state.index.deleteObjects(isRemoved);
           return state.index.waitTask(taskID);
         }
-      })
+      });
 
       await Promise.all(cleanup);
     }
@@ -230,7 +250,7 @@ function indexExists(index) {
   return index
     .getSettings()
     .then(() => true)
-    .catch(error => {
+    .catch((error) => {
       if (error.statusCode !== 404) {
         throw error;
       }
@@ -250,5 +270,16 @@ function setStatus(activity, status) {
     activity.setStatus(status);
   } else {
     console.log('Algolia:', status);
+  }
+}
+
+async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
+  if (enablePartialUpdates) {
+    return index;
+  }
+
+  const mainIndexExists = await indexExists(index);
+  if (mainIndexExists) {
+    return tempIndex;
   }
 }

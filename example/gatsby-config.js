@@ -53,8 +53,8 @@ module.exports = {
         indexName: process.env.ALGOLIA_INDEXNAME, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
-        enablePartialUpdates: true // default: true
-        matchFields: ['matchFields']
+        enablePartialUpdates: true, // default: true
+        matchFields: ['matchFields'],
       },
     },
   ],
