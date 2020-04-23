@@ -11,7 +11,6 @@ const query = `{
         # be inserted by Algolia automatically
         # and will be less simple to update etc.
         objectID: id
-        updated
         component
         path
         componentChunkName
@@ -28,7 +27,6 @@ const query = `{
 
 const queries = [
   {
-    indexName: `pages`,
     query,
     transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
     settings: {
