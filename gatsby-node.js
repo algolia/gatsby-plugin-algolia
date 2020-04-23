@@ -98,7 +98,13 @@ exports.onPostBuild = async function (
       report.panic(`failed to index to Algolia`, result.errors);
     }
 
-    const objects = await transformer(result);
+    const objects = await transformer(result).map(object => ({ objectID: object.objectID || object.id, ...object }));
+
+    if (objects.length > 0 && !objects[0].objectID) {
+      report.panic(
+        `failed to index to Algolia. Query results do not have 'objectID' or 'id' key`
+      );
+    }
 
     setStatus(
       activity,
@@ -118,14 +124,10 @@ exports.onPostBuild = async function (
         `query ${i}: found ${nbMatchedRecords} existing records`
       );
 
-      if(objects.length > 0 && !objects[0].objectID && objects[0].id){
-        objects.map(curObj => curObj.objectID = curObj.id)
-      }
 
       if (nbMatchedRecords) {
-        if (objects.length > 0 && objects[0].objectID) {
           hasChanged = objects.filter((curObj) => {
-            const ID = curObj.objectID || curObj.id;
+            const ID = curObj.objectID;
             let extObj = algoliaObjects[ID];
 
             /* The object exists so we don't need to remove it from Algolia */
@@ -140,7 +142,6 @@ exports.onPostBuild = async function (
           Object.keys(algoliaObjects).forEach(
             ({ objectID }) => (currentIndexState.toRemove[objectID] = true)
           );
-        }
       }
 
       setStatus(
