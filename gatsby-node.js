@@ -100,12 +100,6 @@ exports.onPostBuild = async function (
 
     const objects = await transformer(result);
 
-    if (objects.length > 0 && !objects[0].objectID) {
-      report.panic(
-        `failed to index to Algolia. Query results do not have 'objectID' key`
-      );
-    }
-
     setStatus(
       activity,
       `query ${i}: graphql resulted in ${Object.keys(objects).length} records`
@@ -124,23 +118,29 @@ exports.onPostBuild = async function (
         `query ${i}: found ${nbMatchedRecords} existing records`
       );
 
+      if(objects.length > 0 && !objects[0].objectID && objects[0].id){
+        objects.map(curObj => curObj.objectID = curObj.id)
+      }
+
       if (nbMatchedRecords) {
-        hasChanged = objects.filter((curObj) => {
-          const ID = curObj.objectID;
-          let extObj = algoliaObjects[ID];
+        if (objects.length > 0 && objects[0].objectID) {
+          hasChanged = objects.filter((curObj) => {
+            const ID = curObj.objectID || curObj.id;
+            let extObj = algoliaObjects[ID];
 
-          /* The object exists so we don't need to remove it from Algolia */
-          delete algoliaObjects[ID];
-          delete currentIndexState.toRemove[ID];
+            /* The object exists so we don't need to remove it from Algolia */
+            delete algoliaObjects[ID];
+            delete currentIndexState.toRemove[ID];
 
-          if (!extObj) return true;
+            if (!extObj) return true;
 
-          return !!matchFields.find((field) => extObj[field] !== curObj[field]);
-        });
+            return !!matchFields.find((field) => extObj[field] !== curObj[field]);
+          });
 
-        Object.keys(algoliaObjects).forEach(
-          ({ objectID }) => (currentIndexState.toRemove[objectID] = true)
-        );
+          Object.keys(algoliaObjects).forEach(
+            ({ objectID }) => (currentIndexState.toRemove[objectID] = true)
+          );
+        }
       }
 
       setStatus(
