@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.8.1"></a>
+## [0.8.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.8.0...v0.8.1) (2020-04-23)
+
+
+### Bug Fixes
+
+* allow "id" instead of "objectID" again ([#56](https://github.com/algolia/gatsby-plugin-algolia/issues/56)) ([4de4b1b](https://github.com/algolia/gatsby-plugin-algolia/commit/4de4b1b))
+
+
+
 <a name="0.8.0"></a>
 # [0.8.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.7.0...v0.8.0) (2020-04-20)
 
