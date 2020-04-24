@@ -164,20 +164,18 @@ exports.onPostBuild = async function (
 
     await Promise.all(chunkJobs);
 
-    if (settings) {
-      // Account for forwardToReplicas:
-      const extraModifiers = forwardToReplicas ? { forwardToReplicas } : {};
+    const settingsToApply = await getSettingsToApply({
+      settings,
+      index,
+      tempIndex,
+      indexToUse,
+    });
 
-      // If we're building replicas, we don't want to add them to temporary indices
-      const { replicas, ...adjustedSettings } = settings;
+    const { taskID } = await indexToUse.setSettings(settingsToApply, {
+      forwardToReplicas,
+    });
 
-      const { taskID } = await indexToUse.setSettings(
-        indexToUse === tempIndex ? adjustedSettings : settings,
-        extraModifiers
-      );
-
-      await indexToUse.waitTask(taskID);
-    }
+    await indexToUse.waitTask(taskID);
 
     if (indexToUse === tempIndex) {
       setStatus(activity, `query ${i}: moving copied index to main index`);
@@ -285,4 +283,16 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   if (mainIndexExists) {
     return tempIndex;
   }
+}
+
+async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
+  const requestedSettings = settings ? settings : await index.getSettings();
+
+  // If we're building replicas, we don't want to add them to temporary indices
+  if (indexToUse === tempIndex) {
+    const { replicas, ...adjustedSettings } = requestedSettings;
+    return adjustedSettings;
+  }
+
+  return requestedSettings;
 }
