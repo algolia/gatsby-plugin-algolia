@@ -275,14 +275,17 @@ function setStatus(activity, status) {
 }
 
 async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
-  if (enablePartialUpdates) {
-    return index;
+  const mainIndexExists = await indexExists(index);
+
+  if (enablePartialUpdates && !mainIndexExists) {
+    return createIndex(index);
   }
 
-  const mainIndexExists = await indexExists(index);
-  if (mainIndexExists) {
+  if (!enablePartialUpdates && mainIndexExists) {
     return tempIndex;
   }
+
+  return index;
 }
 
 async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
@@ -295,4 +298,10 @@ async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
   }
 
   return requestedSettings;
+}
+
+async function createIndex(index) {
+  const { taskID } = await index.setSettings({});
+  await index.waitTask(taskID);
+  return index;
 }
