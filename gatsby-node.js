@@ -82,6 +82,11 @@ exports.onPostBuild = async function (
       tempIndex,
       enablePartialUpdates,
     });
+    if (!indexToUse) {
+      report.panic(
+        `The index you specified ("${indexName}") can not be found. Please log in to your Algolia dashboard and create it.`
+      );
+    }
 
     /* Use to keep track of what to remove afterwards */
     if (!indexState[indexName]) {
