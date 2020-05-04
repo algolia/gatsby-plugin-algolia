@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.10.0"></a>
+# [0.10.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.9.0...v0.10.0) (2020-05-04)
+
+
+### Bug Fixes
+
+* create index before browse ([#61](https://github.com/algolia/gatsby-plugin-algolia/issues/61)) ([1bf7164](https://github.com/algolia/gatsby-plugin-algolia/commit/1bf7164))
+* **example:** enablePartialUpdates is false ([#62](https://github.com/algolia/gatsby-plugin-algolia/issues/62)) ([155dbf3](https://github.com/algolia/gatsby-plugin-algolia/commit/155dbf3))
+
+
+
 <a name="0.9.0"></a>
 # [0.9.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.8.1...v0.9.0) (2020-04-24)
 
