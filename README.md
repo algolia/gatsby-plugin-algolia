@@ -71,7 +71,7 @@ module.exports = {
         // Careful, no not prefix this with GATSBY_, since that way users can change
         // the data in the index.
         apiKey: process.env.ALGOLIA_API_KEY,
-        indexName: process.env.ALGOLIA_API_KEY, // for all queries
+        indexName: process.env.ALGOLIA_INDEX_NAME, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
         settings: {
