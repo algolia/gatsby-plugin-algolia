@@ -65,6 +65,7 @@ const queries = [
 module.exports = {
   plugins: [
     {
+      // This plugin must be placed last in your list of plugins to ensure that it can query all the GraphQL data
       resolve: `gatsby-plugin-algolia`,
       options: {
         appId: process.env.ALGOLIA_APP_ID,
