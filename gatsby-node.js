@@ -99,7 +99,7 @@ exports.onPostBuild = async function (
       report.panic(`failed to index to Algolia`, result.errors);
     }
 
-    const objects = await transformer(result).map((object) => ({
+    const objects = (await transformer(result)).map((object) => ({
       objectID: object.objectID || object.id,
       ...object,
     }));
