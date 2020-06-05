@@ -93,7 +93,7 @@ exports.onPostBuild = async function (
     }
     const currentIndexState = indexState[indexName];
 
-    setStatus(activity, `query ${i}: executing query`);
+    setStatus(activity, `query #${i + 1}: executing query`);
     const result = await graphql(query);
     if (result.errors) {
       report.panic(`failed to index to Algolia`, result.errors);
