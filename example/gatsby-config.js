@@ -27,9 +27,9 @@ const query = `{
 
 const queries = [
   {
-    indexName: `pages`,
     query,
     transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
+    // indexName: 'pages', // optional
     settings: {
       attributesToSnippet: ['path:5', 'internal'],
     },
@@ -52,6 +52,8 @@ module.exports = {
         indexName: process.env.ALGOLIA_INDEXNAME, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
+        enablePartialUpdates: true, // default: false
+        matchFields: ['matchFields'],
       },
     },
   ],

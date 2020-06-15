@@ -289,6 +289,7 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   return index;
 }
 
+
 async function getSettingsToApply({
   settings: givenSettings,
   index,

@@ -58,28 +58,61 @@ const queries = [
     settings: {
       // optional, any index settings
     },
+    matchFields: ['slug', 'modified'], // Array<String> overrides main match fields, optional
   },
 ];
 
 module.exports = {
   plugins: [
     {
+      // This plugin must be placed last in your list of plugins to ensure that it can query all the GraphQL data
       resolve: `gatsby-plugin-algolia`,
       options: {
         appId: process.env.ALGOLIA_APP_ID,
+        // Careful, no not prefix this with GATSBY_, since that way users can change
+        // the data in the index.
         apiKey: process.env.ALGOLIA_API_KEY,
         indexName: process.env.ALGOLIA_INDEX_NAME, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
+        settings: {
+          // optional, any index settings
+        },
+        enablePartialUpdates: true, // default: false
+        matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
       },
     },
   ],
 };
 ```
 
-The `transformer` field accepts a function and optionally you may provide an `async` function.
-
 The index will be synchronised with the provided index name on Algolia on the `build` step in Gatsby. This is not done earlier to prevent you going over quota while developing.
+
+
+## Partial Updates
+
+By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in the options of the plugin:
+
+```js
+  resolve: `gatsby-plugin-algolia`,
+  options: {
+    /* ... */
+    enablePartialUpdates: true,
+    /* (optional) Fields to use for comparing if the index object is different from the new one */
+    /* By default it uses a field called "modified" which could be a boolean | datetime string */
+    matchFields: ['slug', 'modified'] // Array<String> default: ['modified']
+  }
+```
+
+This saves a lot of Algolia operations since you don't reindex everything on everybuild.
+
+### Advanced
+
+You can also specify `matchFields` per query to check for different fields based on the type of objects you are indexing.
+
+## Transformer
+
+The `transformer` field accepts a function and optionally you may provide an `async` function. This is useful when you want to change e.g. "edges.node" to simply an array.
 
 # Feedback
 
