@@ -296,7 +296,12 @@ async function getSettingsToApply({
   indexToUse,
 }) {
   const { replicaUpdateMode, ...settings } = givenSettings;
-  const existingSettings = await index.getSettings();
+  var existingSettings = {};
+  try {
+    existingSettings = await index.getSettings();
+  } catch (e) {
+    report.error(`${e.toString()} ${index.indexName}`);
+  }
   const replicasToSet = getReplicasToSet(
     settings.replicas,
     existingSettings.replicas,
@@ -310,8 +315,7 @@ async function getSettingsToApply({
     requestedSettings = adjustedSettings;
     if (replicasToSet)
       await index.setSettings({ replicas: replicasToSet }).catch((err) => {
-        console.error(replicasToSet);
-        throw err;
+        report.panic(`${err.toString()} ${replicasToSet}`);
       });
   }
   return requestedSettings;
