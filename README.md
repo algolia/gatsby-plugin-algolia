@@ -70,7 +70,7 @@ module.exports = {
       options: {
         appId: process.env.ALGOLIA_APP_ID,
         // Careful, no not prefix this with GATSBY_, since that way users can change
-        // the data in the index.
+        // the data in the index. Instead use GATSBY_ALGOLIA_API_KEY for a search-only one
         apiKey: process.env.ALGOLIA_API_KEY,
         indexName: process.env.ALGOLIA_INDEX_NAME, // for all queries
         queries,
