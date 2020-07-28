@@ -143,7 +143,7 @@ exports.onPostBuild = async function (
         });
 
         Object.keys(algoliaObjects).forEach(
-          ({ objectID }) => (currentIndexState.toRemove[objectID] = true)
+          objectID => (currentIndexState.toRemove[objectID] = true)
         );
       }
 
