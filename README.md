@@ -100,11 +100,15 @@ By default all records will be reindexed on every build. To enable only indexing
     enablePartialUpdates: true,
     /* (optional) Fields to use for comparing if the index object is different from the new one */
     /* By default it uses a field called "modified" which could be a boolean | datetime string */
-    matchFields: ['slug', 'modified'] // Array<String> default: ['modified']
+    matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
   }
 ```
 
-This saves a lot of Algolia operations since you don't reindex everything on everybuild.
+This saves a lot of Algolia operations since you don't reindex everything on every build.
+
+Adding `matchFields` is useful to decide whether an object has been changed since the last time it was indexed. If you save e.g. a timestamp of the record, you can avoid reindexing when it has not changed.
+
+If you have objects which come from another indexing process (wordpress, magento, shopify, custom script...), make sure that they do not have any of the `matchFields`, so they stay in the index regardless of reindex.
 
 ### Advanced
 

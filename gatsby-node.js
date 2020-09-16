@@ -7,7 +7,7 @@ const report = require('gatsby-cli/lib/reporter');
  *
  * @param {any} obj what to keep the same
  */
-const identity = (obj) => obj;
+const identity = obj => obj;
 
 /**
  * Fetches all records for the current index from Algolia
@@ -20,15 +20,15 @@ function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
     const browser = index.browseAll('', { attributesToRetrieve });
     const hits = {};
 
-    browser.on('result', (content) => {
+    browser.on('result', content => {
       if (Array.isArray(content.hits)) {
-        content.hits.forEach((hit) => {
+        content.hits.forEach(hit => {
           hits[hit.objectID] = hit;
         });
       }
     });
     browser.on('end', () => resolve(hits));
-    browser.on('error', (err) => reject(err));
+    browser.on('error', err => reject(err));
   });
 }
 
@@ -96,10 +96,15 @@ exports.onPostBuild = async function (
     setStatus(activity, `query #${i + 1}: executing query`);
     const result = await graphql(query);
     if (result.errors) {
-      report.panic(`failed to index to Algolia`, result.errors);
+      report.panic(
+        `failed to index to Algolia, errors:\n ${JSON.stringify(
+          result.errors
+        )}`,
+        result.errors
+      );
     }
 
-    const objects = (await transformer(result)).map((object) => ({
+    const objects = (await transformer(result)).map(object => ({
       objectID: object.objectID || object.id,
       ...object,
     }));
@@ -129,7 +134,17 @@ exports.onPostBuild = async function (
       );
 
       if (nbMatchedRecords) {
-        hasChanged = objects.filter((curObj) => {
+        hasChanged = objects.filter(curObj => {
+          if (matchFields.every(curObj => Boolean(curObj[field]) === false)) {
+            report.panic(
+              'when enablePartialUpdates is true, the objects must have at least one of the match fields. Current object:\n' +
+                JSON.stringify(curObj, null, 2) +
+                '\n' +
+                'expected one of these fields:\n' +
+                matchFields.join('\n')
+            );
+          }
+
           const ID = curObj.objectID;
           let extObj = algoliaObjects[ID];
 
@@ -139,12 +154,17 @@ exports.onPostBuild = async function (
 
           if (!extObj) return true;
 
-          return !!matchFields.find((field) => extObj[field] !== curObj[field]);
+          return matchFields.some(field => extObj[field] !== curObj[field]);
         });
 
-        Object.keys(algoliaObjects).forEach(
-          objectID => (currentIndexState.toRemove[objectID] = true)
-        );
+        Object.keys(algoliaObjects).forEach(objectID => {
+          // if the object has one of the matchFields, it should be removed,
+          // but objects without matchFields are considered "not controlled"
+          // and stay in the index
+          if (matchFields.some(field => algoliaObjects[objectID][field])) {
+            currentIndexState.toRemove[objectID] = true;
+          }
+        });
       }
 
       setStatus(
@@ -207,7 +227,7 @@ exports.onPostBuild = async function (
       await Promise.all(cleanup);
     }
   } catch (err) {
-    report.panic(`failed to index to Algolia`, err);
+    report.panic('failed to index to Algolia', err);
   }
   activity.end();
 };
@@ -252,7 +272,7 @@ function indexExists(index) {
   return index
     .getSettings()
     .then(() => true)
-    .catch((error) => {
+    .catch(error => {
       if (error.statusCode !== 404) {
         throw error;
       }
