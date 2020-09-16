@@ -135,7 +135,7 @@ exports.onPostBuild = async function (
 
       if (nbMatchedRecords) {
         hasChanged = objects.filter(curObj => {
-          if (matchFields.every(curObj => Boolean(curObj[field]) === false)) {
+          if (matchFields.every(field => Boolean(curObj[field]) === false)) {
             report.panic(
               'when enablePartialUpdates is true, the objects must have at least one of the match fields. Current object:\n' +
                 JSON.stringify(curObj, null, 2) +
