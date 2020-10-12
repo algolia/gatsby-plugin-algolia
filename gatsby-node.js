@@ -61,7 +61,7 @@ async function doQuery({
   } = queryObj;
 
   const setQueryStatus = status => {
-    setStatus(activity, `Query #${queryIndex} (${indexName}): ${status}`);
+    setStatus(activity, `Query #${queryIndex + 1} (${indexName}): ${status}`);
   };
 
   if (!query) {
