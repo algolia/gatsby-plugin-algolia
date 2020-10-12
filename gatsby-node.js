@@ -108,7 +108,7 @@ async function doQuery({
 
   setQueryStatus(`graphql resulted in ${Object.keys(objects).length} records`);
 
-  let hasChanged = [];
+  let hasChanged = objects;
   let algoliaObjects = {};
   if (enablePartialUpdates) {
     setQueryStatus(`Starting Partial updates`);
