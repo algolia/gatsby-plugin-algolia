@@ -205,7 +205,7 @@ exports.onPostBuild = async function ({ graphql }, options) {
     apiKey,
     queries,
     enablePartialUpdates = false,
-    disableConcurrentAccess = false,
+    concurrentQueries = true,
   } = options;
 
   const activity = report.activityTimer(`index to Algolia`);
@@ -227,7 +227,7 @@ exports.onPostBuild = async function ({ graphql }, options) {
         options,
       });
 
-      if (disableConcurrentAccess === true) {
+      if (concurrentQueries === false) {
         // await each individual query rather than batching them
         const res = await queryPromise;
         jobs.push(res);
