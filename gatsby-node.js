@@ -60,6 +60,10 @@ async function doQuery({
     matchFields = mainMatchFields,
   } = queryObj;
 
+  const setQueryStatus = status => {
+    setStatus(activity, `Query #${queryIndex} (${indexName}): ${status}`);
+  };
+
   if (!query) {
     report.panic(
       `failed to index to Algolia. You did not give "query" to this query`
@@ -82,10 +86,7 @@ async function doQuery({
   /* Use to keep track of what to remove afterwards */
   const toRemove = {};
 
-  setStatus(
-    activity,
-    `query ${queryIndex} (index: ${indexName}): executing query`
-  );
+  setQueryStatus('Executing query');
   const result = await graphql(query);
   if (result.errors) {
     report.panic(
@@ -105,25 +106,17 @@ async function doQuery({
     );
   }
 
-  setStatus(
-    activity,
-    `query ${queryIndex}: graphql resulted in ${
-      Object.keys(objects).length
-    } records`
-  );
+  setQueryStatus(`graphql resulted in ${Object.keys(objects).length} records`);
 
   let hasChanged = [];
   let algoliaObjects = {};
   if (enablePartialUpdates) {
-    setStatus(activity, `query ${queryIndex}: starting Partial updates`);
+    setQueryStatus(`Starting Partial updates`);
 
     algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
 
     const nbMatchedRecords = Object.keys(algoliaObjects).length;
-    setStatus(
-      activity,
-      `query ${queryIndex}: found ${nbMatchedRecords} existing records`
-    );
+    setQueryStatus(`Found ${nbMatchedRecords} existing records`);
 
     if (nbMatchedRecords) {
       hasChanged = objects.filter(curObj => {
@@ -159,19 +152,15 @@ async function doQuery({
       });
     }
 
-    setStatus(
-      activity,
-      `query ${queryIndex}: Partial updates – [insert/update: ${hasChanged.length}, total: ${objects.length}]`
+    setQueryStatus(
+      `Partial updates – [insert/update: ${hasChanged.length}, total: ${objects.length}]`
     );
   }
 
   if (hasChanged.length) {
     const chunks = chunk(hasChanged, chunkSize);
 
-    setStatus(
-      activity,
-      `query ${queryIndex}: splitting in ${chunks.length} jobs`
-    );
+    setQueryStatus(`Splitting in ${chunks.length} jobs`);
 
     /* Add changed / new objects */
     const chunkJobs = chunks.map(async function (chunked) {
@@ -181,7 +170,7 @@ async function doQuery({
 
     await Promise.all(chunkJobs);
   } else {
-    setStatus(activity, `query ${queryIndex}: no changes; skipping`);
+    setQueryStatus('No changes; skipping');
   }
 
   const settingsToApply = await getSettingsToApply({
@@ -198,14 +187,11 @@ async function doQuery({
   await indexToUse.waitTask(taskID);
 
   if (indexToUse === tempIndex) {
-    setStatus(
-      activity,
-      `query ${queryIndex}: moving copied index to main index`
-    );
+    setQueryStatus('Moving copied index to main index');
     await moveIndex(client, indexToUse, index);
   }
 
-  setStatus(activity, `query ${queryIndex}: done`);
+  setQueryStatus('Done!');
 
   return {
     index,
@@ -344,7 +330,7 @@ function setStatus(activity, status) {
   if (activity && activity.setStatus) {
     activity.setStatus(status);
   } else {
-    console.log('Algolia:', status);
+    console.log('[Algolia]', status);
   }
 }
 
