@@ -2,6 +2,36 @@ const algoliasearch = require('algoliasearch');
 const chunk = require('lodash.chunk');
 const report = require('gatsby-cli/lib/reporter');
 
+/**
+ * give back the same thing as this was called with.
+ *
+ * @param {any} obj what to keep the same
+ */
+const identity = obj => obj;
+
+/**
+ * Fetches all records for the current index from Algolia
+ *
+ * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
+ * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
+ */
+function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
+  return new Promise((resolve, reject) => {
+    const browser = index.browseAll('', { attributesToRetrieve });
+    const hits = {};
+
+    browser.on('result', content => {
+      if (Array.isArray(content.hits)) {
+        content.hits.forEach(hit => {
+          hits[hit.objectID] = hit;
+        });
+      }
+    });
+    browser.on('end', () => resolve(hits));
+    browser.on('error', err => reject(err));
+  });
+}
+
 exports.onPostBuild = async function ({ graphql }, options) {
   const {
     appId,
@@ -254,36 +284,6 @@ async function doQuery({
     index,
     toRemove,
   };
-}
-
-/**
- * give back the same thing as this was called with.
- *
- * @param {any} obj what to keep the same
- */
-const identity = obj => obj;
-
-/**
- * Fetches all records for the current index from Algolia
- *
- * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
- * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
- */
-function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
-  return new Promise((resolve, reject) => {
-    const browser = index.browseAll('', { attributesToRetrieve });
-    const hits = {};
-
-    browser.on('result', content => {
-      if (Array.isArray(content.hits)) {
-        content.hits.forEach(hit => {
-          hits[hit.objectID] = hit;
-        });
-      }
-    });
-    browser.on('end', () => resolve(hits));
-    browser.on('error', err => reject(err));
-  });
 }
 
 /**
