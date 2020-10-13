@@ -38,10 +38,9 @@ const queries = [
 
 module.exports = {
   siteMetadata: {
-    title: 'Gatsby Default Starter',
+    title: 'Gatsby Algolia Example',
   },
   plugins: [
-    'gatsby-plugin-react-helmet',
     {
       // in real life this would be:
       // resolve: 'gatsby-plugin-algolia',

@@ -6,9 +6,7 @@
   "dependencies": {
     "gatsby": "^1.9.277",
     "gatsby-link": "^1.6.46",
-    "gatsby-plugin-algolia": "^0.0.4",
-    "gatsby-plugin-react-helmet": "^2.0.11",
-    "react-helmet": "^5.2.0"
+    "gatsby-plugin-algolia": "^0.12.0"
   },
   "keywords": [
     "gatsby"
