@@ -24,7 +24,7 @@ ALGOLIA_INDEX_NAME=XXX
 ```js
 require('dotenv').config({
   path: `.env.${process.env.NODE_ENV}`,
-})
+});
 
 // gatsby-config.js
 const myQuery = `{
@@ -80,6 +80,7 @@ module.exports = {
         },
         enablePartialUpdates: true, // default: false
         matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
+        concurrentQueries: false, // default: true
       },
     },
   ],
@@ -87,7 +88,6 @@ module.exports = {
 ```
 
 The index will be synchronised with the provided index name on Algolia on the `build` step in Gatsby. This is not done earlier to prevent you going over quota while developing.
-
 
 ## Partial Updates
 
@@ -109,6 +109,10 @@ This saves a lot of Algolia operations since you don't reindex everything on eve
 Adding `matchFields` is useful to decide whether an object has been changed since the last time it was indexed. If you save e.g. a timestamp of the record, you can avoid reindexing when it has not changed.
 
 If you have objects which come from another indexing process (wordpress, magento, shopify, custom script...), make sure that they do not have any of the `matchFields`, so they stay in the index regardless of reindex.
+
+## Concurrent Queries
+
+Sometimes, on limited platforms like Netlify, concurrent queries to the same index can lead to unexpected results or hanging builds. Setting `concurrentQueries` to `false` makes it such that queries are run sequentially rather than concurrently, which may solve some concurrent access issues. Be aware that this option may make indexing take longer than it would otherwise.
 
 ### Advanced
 
