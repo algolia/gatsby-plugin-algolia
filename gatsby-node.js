@@ -174,7 +174,7 @@ async function doQuery({
   /* Use to keep track of what to remove afterwards */
   const toRemove = {};
 
-  setQueryStatus('Executing query');
+  setQueryStatus('Executing query...');
   const result = await graphql(query);
   if (result.errors) {
     report.panic(
@@ -198,7 +198,7 @@ async function doQuery({
 
   let hasChanged = objects;
   if (enablePartialUpdates) {
-    setQueryStatus(`Starting Partial updates`);
+    setQueryStatus(`Starting Partial updates...`);
 
     const algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
 
@@ -274,7 +274,7 @@ async function doQuery({
   await indexToUse.waitTask(taskID);
 
   if (indexToUse === tempIndex) {
-    setQueryStatus('Moving copied index to main index');
+    setQueryStatus('Moving copied index to main index...');
     await moveIndex(client, indexToUse, index);
   }
 
