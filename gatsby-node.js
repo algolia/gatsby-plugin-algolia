@@ -164,7 +164,7 @@ async function doQuery({
     );
   }
 
-  setQueryStatus(`graphql resulted in ${Object.keys(objects).length} records`);
+  setQueryStatus(`graphql resulted in ${objects.length} records`);
 
   let hasChanged = objects;
   let algoliaObjects = {};
