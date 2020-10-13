@@ -2,35 +2,93 @@ const algoliasearch = require('algoliasearch');
 const chunk = require('lodash.chunk');
 const report = require('gatsby-cli/lib/reporter');
 
-/**
- * give back the same thing as this was called with.
- *
- * @param {any} obj what to keep the same
- */
-const identity = obj => obj;
+exports.onPostBuild = async function ({ graphql }, options) {
+  const {
+    appId,
+    apiKey,
+    queries,
+    enablePartialUpdates = false,
+    concurrentQueries = true,
+  } = options;
 
-/**
- * Fetches all records for the current index from Algolia
- *
- * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
- * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
- */
-function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
-  return new Promise((resolve, reject) => {
-    const browser = index.browseAll('', { attributesToRetrieve });
-    const hits = {};
+  const activity = report.activityTimer(`index to Algolia`);
+  activity.start();
 
-    browser.on('result', content => {
-      if (Array.isArray(content.hits)) {
-        content.hits.forEach(hit => {
-          hits[hit.objectID] = hit;
-        });
+  const client = algoliasearch(appId, apiKey);
+
+  setStatus(activity, `${queries.length} queries to index`);
+
+  try {
+    const jobs = [];
+    for (const [queryIndex, queryObj] of queries.entries()) {
+      const queryPromise = doQuery({
+        client,
+        activity,
+        queryObj,
+        queryIndex,
+        graphql,
+        options,
+      });
+
+      if (concurrentQueries) {
+        jobs.push(queryPromise);
+      } else {
+        // await each individual query rather than batching them
+        const res = await queryPromise;
+        jobs.push(res);
       }
-    });
-    browser.on('end', () => resolve(hits));
-    browser.on('error', err => reject(err));
-  });
-}
+    }
+
+    const jobResults = await Promise.all(jobs);
+
+    if (enablePartialUpdates) {
+      // Combine queries with the same index
+      const cleanupJobs = jobResults.reduce((acc, { index, toRemove = {} }) => {
+        const indexName = index.indexName;
+        if (acc.hasOwnProperty(indexName)) {
+          // If index already exists, combine fields to remove
+          return {
+            ...acc,
+            [indexName]: {
+              ...acc[indexName],
+              toRemove: {
+                ...acc[indexName].toRemove,
+                ...toRemove,
+              },
+            },
+          };
+        } else {
+          return {
+            ...acc,
+            [indexName]: {
+              index,
+              toRemove,
+            },
+          };
+        }
+      }, {});
+
+      const cleanup = Object.keys(cleanupJobs).map(async function (indexName) {
+        const { index, toRemove } = cleanupJobs[indexName];
+        const isRemoved = Object.keys(toRemove);
+
+        if (isRemoved.length) {
+          setStatus(
+            activity,
+            `deleting ${isRemoved.length} objects from ${indexName} index`
+          );
+          const { taskID } = await index.deleteObjects(isRemoved);
+          return index.waitTask(taskID);
+        }
+      });
+
+      await Promise.all(cleanup);
+    }
+  } catch (err) {
+    report.panic('failed to index to Algolia', err);
+  }
+  activity.end();
+};
 
 /**
  * Runs as individual query and updates the corresponding index on Algolia
@@ -199,93 +257,35 @@ async function doQuery({
   };
 }
 
-exports.onPostBuild = async function ({ graphql }, options) {
-  const {
-    appId,
-    apiKey,
-    queries,
-    enablePartialUpdates = false,
-    concurrentQueries = true,
-  } = options;
+/**
+ * give back the same thing as this was called with.
+ *
+ * @param {any} obj what to keep the same
+ */
+const identity = obj => obj;
 
-  const activity = report.activityTimer(`index to Algolia`);
-  activity.start();
+/**
+ * Fetches all records for the current index from Algolia
+ *
+ * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
+ * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
+ */
+function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
+  return new Promise((resolve, reject) => {
+    const browser = index.browseAll('', { attributesToRetrieve });
+    const hits = {};
 
-  const client = algoliasearch(appId, apiKey);
-
-  setStatus(activity, `${queries.length} queries to index`);
-
-  try {
-    const jobs = [];
-    for (const [queryIndex, queryObj] of queries.entries()) {
-      const queryPromise = doQuery({
-        client,
-        activity,
-        queryObj,
-        queryIndex,
-        graphql,
-        options,
-      });
-
-      if (concurrentQueries === false) {
-        // await each individual query rather than batching them
-        const res = await queryPromise;
-        jobs.push(res);
-      } else {
-        jobs.push(queryPromise);
+    browser.on('result', content => {
+      if (Array.isArray(content.hits)) {
+        content.hits.forEach(hit => {
+          hits[hit.objectID] = hit;
+        });
       }
-    }
-
-    const jobResults = await Promise.all(jobs);
-
-    if (enablePartialUpdates) {
-      // Combine queries with the same index
-      const cleanupJobs = jobResults.reduce((acc, { index, toRemove = {} }) => {
-        const indexName = index.indexName;
-        if (acc.hasOwnProperty(indexName)) {
-          // If index already exists, combine fields to remove
-          return {
-            ...acc,
-            [indexName]: {
-              ...acc[indexName],
-              toRemove: {
-                ...acc[indexName].toRemove,
-                ...toRemove,
-              },
-            },
-          };
-        } else {
-          return {
-            ...acc,
-            [indexName]: {
-              index,
-              toRemove,
-            },
-          };
-        }
-      }, {});
-
-      const cleanup = Object.keys(cleanupJobs).map(async function (indexName) {
-        const { index, toRemove } = cleanupJobs[indexName];
-        const isRemoved = Object.keys(toRemove);
-
-        if (isRemoved.length) {
-          setStatus(
-            activity,
-            `deleting ${isRemoved.length} objects from ${indexName} index`
-          );
-          const { taskID } = await index.deleteObjects(isRemoved);
-          return index.waitTask(taskID);
-        }
-      });
-
-      await Promise.all(cleanup);
-    }
-  } catch (err) {
-    report.panic('failed to index to Algolia', err);
-  }
-  activity.end();
-};
+    });
+    browser.on('end', () => resolve(hits));
+    browser.on('error', err => reject(err));
+  });
+}
 
 /**
  * moves the source index to the target index
