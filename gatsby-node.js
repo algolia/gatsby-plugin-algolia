@@ -20,11 +20,11 @@ exports.onPostBuild = async function ({ graphql }, options) {
 
   try {
     const jobs = [];
-    for (const [queryIndex, queryObj] of queries.entries()) {
+    for (const [queryIndex, queryOptions] of queries.entries()) {
       const queryPromise = doQuery({
         client,
         activity,
-        queryObj,
+        queryOptions,
         queryIndex,
         graphql,
         options,
@@ -96,7 +96,7 @@ exports.onPostBuild = async function ({ graphql }, options) {
 async function doQuery({
   client,
   activity,
-  queryObj,
+  queryOptions,
   queryIndex,
   options,
   graphql,
@@ -116,7 +116,7 @@ async function doQuery({
     settings = mainSettings,
     forwardToReplicas,
     matchFields = mainMatchFields,
-  } = queryObj;
+  } = queryOptions;
 
   const setQueryStatus = status => {
     setStatus(activity, `Query #${queryIndex + 1} (${indexName}): ${status}`);
