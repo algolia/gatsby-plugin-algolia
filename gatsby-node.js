@@ -167,11 +167,10 @@ async function doQuery({
   setQueryStatus(`graphql resulted in ${objects.length} records`);
 
   let hasChanged = objects;
-  let algoliaObjects = {};
   if (enablePartialUpdates) {
     setQueryStatus(`Starting Partial updates`);
 
-    algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
+    const algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
 
     const nbMatchedRecords = Object.keys(algoliaObjects).length;
     setQueryStatus(`Found ${nbMatchedRecords} existing records`);
