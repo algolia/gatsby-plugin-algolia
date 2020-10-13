@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.13.0"></a>
+# [0.13.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.12.1...v0.13.0) (2020-10-13)
+
+
+### Features
+
+* **concurrentQueries:** add option to disable queries happening at the same time ([#96](https://github.com/algolia/gatsby-plugin-algolia/issues/96)) ([165aed1](https://github.com/algolia/gatsby-plugin-algolia/commit/165aed1))
+
+
+
 <a name="0.12.1"></a>
 ## [0.12.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.12.0...v0.12.1) (2020-09-16)
 
