@@ -39,10 +39,17 @@ exports.onPostBuild = async function ({ graphql }, options) {
     queries,
     enablePartialUpdates = false,
     concurrentQueries = true,
+    skipIndexing = false,
   } = options;
 
   const activity = report.activityTimer(`index to Algolia`);
   activity.start();
+
+  if (skipIndexing === true) {
+    setStatus(activity, `options.skipIndexing is true; skipping indexing`);
+    activity.end();
+    return;
+  }
 
   const client = algoliasearch(appId, apiKey);
 
@@ -117,6 +124,7 @@ exports.onPostBuild = async function ({ graphql }, options) {
   } catch (err) {
     report.panic('failed to index to Algolia', err);
   }
+
   activity.end();
 };
 
