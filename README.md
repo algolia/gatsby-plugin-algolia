@@ -110,13 +110,13 @@ Adding `matchFields` is useful to decide whether an object has been changed sinc
 
 If you have objects which come from another indexing process (wordpress, magento, shopify, custom script...), make sure that they do not have any of the `matchFields`, so they stay in the index regardless of reindex.
 
-## Concurrent Queries
-
-Sometimes, on limited platforms like Netlify, concurrent queries to the same index can lead to unexpected results or hanging builds. Setting `concurrentQueries` to `false` makes it such that queries are run sequentially rather than concurrently, which may solve some concurrent access issues. Be aware that this option may make indexing take longer than it would otherwise.
-
 ### Advanced
 
 You can also specify `matchFields` per query to check for different fields based on the type of objects you are indexing.
+
+## Concurrent Queries
+
+Sometimes, on limited platforms like Netlify, concurrent queries to the same index can lead to unexpected results or hanging builds. Setting `concurrentQueries` to `false` makes it such that queries are run sequentially rather than concurrently, which may solve some concurrent access issues. Be aware that this option may make indexing take longer than it would otherwise.
 
 ## Transformer
 
