@@ -127,7 +127,7 @@ function groupQueriesByIndex(queries = [], config) {
 }
 
 /**
- * FIXME
+ * Run all queries for a given index, then make any updates / removals necessary
  */
 async function runIndexQueries(
   indexName,
