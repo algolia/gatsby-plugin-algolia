@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.14.0"></a>
+# [0.14.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.13.0...v0.14.0) (2020-10-23)
+
+
+### Features
+
+* **replica:** safely update replicas ([#81](https://github.com/algolia/gatsby-plugin-algolia/issues/81)) ([1bdadb2](https://github.com/algolia/gatsby-plugin-algolia/commit/1bdadb2))
+
+
+
 <a name="0.13.0"></a>
 # [0.13.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.12.1...v0.13.0) (2020-10-13)
 
