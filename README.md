@@ -114,6 +114,18 @@ If you have objects which come from another indexing process (wordpress, magento
 
 You can also specify `matchFields` per query to check for different fields based on the type of objects you are indexing.
 
+## Settings
+
+You can set settings for each index individually (per query), or otherwise it will keep your existing settings.
+
+### Replicas
+
+For replica settings, extra care is taken to make sure only apply replicas to non-temporary indices.
+
+If you pass `replicaUpdateMode: 'replace'` in the index settings, you can choose to update the replicas fully with those in the settings.
+
+If you pass `replicaUpdateMode: 'merge'` in the index settings, the replica settings will combine the replicas set on your dashboard with the additional ones you set via index settings here.
+
 ## Concurrent Queries
 
 Sometimes, on limited platforms like Netlify, concurrent queries to the same index can lead to unexpected results or hanging builds. Setting `concurrentQueries` to `false` makes it such that queries are run sequentially rather than concurrently, which may solve some concurrent access issues. Be aware that this option may make indexing take longer than it would otherwise.

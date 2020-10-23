@@ -347,8 +347,27 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   return index;
 }
 
-async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
-  const requestedSettings = settings ? settings : await index.getSettings();
+async function getSettingsToApply({
+  settings: givenSettings,
+  index,
+  tempIndex,
+  indexToUse,
+}) {
+  const { replicaUpdateMode, ...settings } = givenSettings;
+  const existingSettings = await index.getSettings().catch(e => {
+    report.panic(`${e.toString()} ${index.indexName}`);
+  });
+
+  const replicasToSet = getReplicasToSet(
+    settings.replicas,
+    existingSettings.replicas,
+    replicaUpdateMode
+  );
+
+  const requestedSettings = {
+    ...(settings ? settings : existingSettings),
+    replicas: replicasToSet,
+  };
 
   // If we're building replicas, we don't want to add them to temporary indices
   if (indexToUse === tempIndex) {
@@ -357,6 +376,24 @@ async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
   }
 
   return requestedSettings;
+}
+
+function getReplicasToSet(
+  givenReplicas = [],
+  existingReplicas = [],
+  replicaUpdateMode = 'merge'
+) {
+  if (replicaUpdateMode == 'replace') {
+    return givenReplicas;
+  }
+
+  if (replicaUpdateMode === 'merge') {
+    const replicas = new Set();
+    existingReplicas.forEach(replica => replicas.add(replica));
+    givenReplicas.forEach(replica => replicas.add(replica));
+
+    return [...replicas];
+  }
 }
 
 async function createIndex(index) {
