@@ -260,18 +260,20 @@ async function doQuery({
     setQueryStatus('No changes; skipping');
   }
 
-  const settingsToApply = await getSettingsToApply({
-    settings,
-    index,
-    tempIndex,
-    indexToUse,
-  });
+  if (settings) {
+    const settingsToApply = await getSettingsToApply({
+      settings,
+      index,
+      tempIndex,
+      indexToUse,
+    });
 
-  const { taskID } = await indexToUse.setSettings(settingsToApply, {
-    forwardToReplicas,
-  });
+    const { taskID } = await indexToUse.setSettings(settingsToApply, {
+      forwardToReplicas,
+    });
 
-  await indexToUse.waitTask(taskID);
+    await indexToUse.waitTask(taskID);
+  }
 
   if (indexToUse === tempIndex) {
     setQueryStatus('Moving copied index to main index...');
