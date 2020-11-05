@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.15.0"></a>
+# [0.15.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.14.1...v0.15.0) (2020-11-05)
+
+
+### Features
+
+* **indexing:** allow plugin to work with repeated single index in queries by batching ([#103](https://github.com/algolia/gatsby-plugin-algolia/issues/103)) ([ec29090](https://github.com/algolia/gatsby-plugin-algolia/commit/ec29090))
+
+
+
 <a name="0.14.1"></a>
 ## [0.14.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.14.0...v0.14.1) (2020-10-26)
 
