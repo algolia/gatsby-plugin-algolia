@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.16.0"></a>
+# [0.16.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.15.0...v0.16.0) (2020-11-07)
+
+
+### Features
+
+* **indexing:** add skipIndexing flag ([#99](https://github.com/algolia/gatsby-plugin-algolia/issues/99)) ([e0965d7](https://github.com/algolia/gatsby-plugin-algolia/commit/e0965d7))
+
+
+
 <a name="0.15.0"></a>
 # [0.15.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.14.1...v0.15.0) (2020-11-05)
 
