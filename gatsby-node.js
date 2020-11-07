@@ -3,13 +3,6 @@ const chunk = require('lodash.chunk');
 const report = require('gatsby-cli/lib/reporter');
 
 /**
- * give back the same thing as this was called with.
- *
- * @param {any} obj what to keep the same
- */
-const identity = obj => obj;
-
-/**
  * Fetches all records for the current index from Algolia
  *
  * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
@@ -32,15 +25,14 @@ function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
   });
 }
 
-exports.onPostBuild = async function ({ graphql }, options) {
+exports.onPostBuild = async function ({ graphql }, config) {
   const {
     appId,
     apiKey,
     queries,
-    enablePartialUpdates = false,
     concurrentQueries = true,
-    skipIndexing = false,
-  } = options;
+    skipIndexing = false
+  } = config;
 
   const activity = report.activityTimer(`index to Algolia`);
   activity.start();
@@ -56,15 +48,16 @@ exports.onPostBuild = async function ({ graphql }, options) {
   setStatus(activity, `${queries.length} queries to index`);
 
   try {
+    // combine queries with the same index to prevent overwriting data
+    const groupedQueries = groupQueriesByIndex(queries, config);
+
     const jobs = [];
-    for (const [queryIndex, queryOptions] of queries.entries()) {
-      const queryPromise = doQuery({
+    for (const [indexName, indexQueries] of Object.entries(groupedQueries)) {
+      const queryPromise = runIndexQueries(indexName, indexQueries, {
         client,
         activity,
-        queryOptions,
-        queryIndex,
         graphql,
-        options,
+        config,
       });
 
       if (concurrentQueries) {
@@ -76,51 +69,7 @@ exports.onPostBuild = async function ({ graphql }, options) {
       }
     }
 
-    const jobResults = await Promise.all(jobs);
-
-    if (enablePartialUpdates) {
-      // Combine queries with the same index
-      const cleanupJobs = jobResults.reduce((acc, { index, toRemove = {} }) => {
-        const indexName = index.indexName;
-        if (acc.hasOwnProperty(indexName)) {
-          // If index already exists, combine fields to remove
-          return {
-            ...acc,
-            [indexName]: {
-              ...acc[indexName],
-              toRemove: {
-                ...acc[indexName].toRemove,
-                ...toRemove,
-              },
-            },
-          };
-        } else {
-          return {
-            ...acc,
-            [indexName]: {
-              index,
-              toRemove,
-            },
-          };
-        }
-      }, {});
-
-      const cleanup = Object.keys(cleanupJobs).map(async function (indexName) {
-        const { index, toRemove } = cleanupJobs[indexName];
-        const isRemoved = Object.keys(toRemove);
-
-        if (isRemoved.length) {
-          setStatus(
-            activity,
-            `deleting ${isRemoved.length} objects from ${indexName} index`
-          );
-          const { taskID } = await index.deleteObjects(isRemoved);
-          return index.waitTask(taskID);
-        }
-      });
-
-      await Promise.all(cleanup);
-    }
+    await Promise.all(jobs);
   } catch (err) {
     report.panic('failed to index to Algolia', err);
   }
@@ -128,48 +77,63 @@ exports.onPostBuild = async function ({ graphql }, options) {
   activity.end();
 };
 
+function groupQueriesByIndex(queries = [], config) {
+  const { indexName: mainIndexName } = config;
+
+  return queries.reduce((groupedQueries, queryOptions) => {
+    const { indexName = mainIndexName } = queryOptions;
+
+    return {
+      ...groupedQueries,
+      [indexName]: [
+        ...(groupedQueries.hasOwnProperty(indexName)
+          ? groupedQueries[indexName]
+          : []),
+        queryOptions,
+      ],
+    };
+  }, {});
+}
+
 /**
- * Runs as individual query and updates the corresponding index on Algolia
+ * Run all queries for a given index, then make any updates / removals necessary
  */
-async function doQuery({
-  client,
-  activity,
-  queryOptions,
-  queryIndex,
-  options,
-  graphql,
-}) {
+async function runIndexQueries(
+  indexName,
+  queries = [],
+  { client, activity, graphql, config }
+) {
   const {
     settings: mainSettings,
-    indexName: mainIndexName,
     chunkSize = 1000,
     enablePartialUpdates = false,
     matchFields: mainMatchFields = ['modified'],
-  } = options;
+  } = config;
 
-  const {
-    indexName = mainIndexName,
-    query,
-    transformer = identity,
-    settings = mainSettings,
-    forwardToReplicas,
-    matchFields = mainMatchFields,
-  } = queryOptions;
+  setStatus(
+    activity,
+    `Running ${queries.length} ${
+      queries.length === 1 ? 'query' : 'queries'
+    } for index ${indexName}...`
+  );
 
-  const setQueryStatus = status => {
-    setStatus(activity, `Query #${queryIndex + 1} (${indexName}): ${status}`);
-  };
+  const objectMapsByQuery = await Promise.all(
+    queries.map(query => getObjectsMapByQuery(query, graphql))
+  );
 
-  if (!query) {
-    report.panic(
-      `failed to index to Algolia. You did not give "query" to this query`
-    );
-  }
-  if (!Array.isArray(matchFields) || !matchFields.length) {
-    return report.panic(
-      `failed to index to Algolia. Argument matchFields has to be an array of strings`
-    );
-  }
+  const allObjectsMap = objectMapsByQuery.reduce((acc, objectsMap = {}) => {
+    return {
+      ...acc,
+      ...objectsMap,
+    };
+  }, {});
+
+  setStatus(
+    activity,
+    `${queries.length === 1 ? 'Query' : 'Queries'} resulted in a total of ${
+      Object.keys(allObjectsMap).length
+    } results`
+  );
 
   const index = client.initIndex(indexName);
   const tempIndex = client.initIndex(`${indexName}_tmp`);
@@ -179,83 +143,86 @@ async function doQuery({
     enablePartialUpdates,
   });
 
-  /* Use to keep track of what to remove afterwards */
-  const toRemove = {};
+  let toIndex = {}; // used to track objects that should be added / updated
+  const toRemove = {}; // used to track objects that are stale and should be removed
 
-  setQueryStatus('Executing query...');
-  const result = await graphql(query);
-  if (result.errors) {
-    report.panic(
-      `failed to index to Algolia, errors:\n ${JSON.stringify(result.errors)}`,
-      result.errors
+  if (enablePartialUpdates !== true) {
+    // enablePartialUpdates isn't true, so index all objects
+    toIndex = { ...allObjectsMap };
+  } else {
+    // iterate over each query to determine which data are fresh
+    setStatus(activity, `Starting Partial updates...`);
+
+    // get all match fields for all queries to minimize calls to the api
+    const allMatchFields = getAllMatchFields(queries, mainMatchFields);
+
+    // get all indexed objects matching all matched fields
+    const indexedObjects = await fetchAlgoliaObjects(
+      indexToUse,
+      allMatchFields
     );
-  }
 
-  const objects = (await transformer(result)).map(object => ({
-    objectID: object.objectID || object.id,
-    ...object,
-  }));
+    // iterate over each query
+    for (const [i, { matchFields = mainMatchFields }] of queries.entries()) {
+      const queryResultsMap = objectMapsByQuery[i] || {};
 
-  if (objects.length > 0 && !objects[0].objectID) {
-    report.panic(
-      `failed to index to Algolia. Query results do not have 'objectID' or 'id' key`
-    );
-  }
+      // iterate over existing objects and compare to fresh data
+      for (const [id, existingObj] of Object.entries(indexedObjects)) {
+        if (queryResultsMap.hasOwnProperty(id)) {
+          // key matches fresh objects, so compare match fields
+          const newObj = queryResultsMap[id];
+          if (!matchFields.every(field => newObj.hasOwnProperty(field))) {
+            report.panic(
+              'when enablePartialUpdates is true, the objects must have at least one of the match fields. Current object:\n' +
+                JSON.stringify(curObj, null, 2) +
+                '\n' +
+                'expected one of these fields:\n' +
+                matchFields.join('\n')
+            );
+          }
 
-  setQueryStatus(`graphql resulted in ${objects.length} records`);
+          if (matchFields.some(field => existingObj[field] !== newObj[field])) {
+            // one or more fields differ, so index new object
+            toIndex[id] = newObj;
+          } else {
+            // objects are the same, so skip
+          }
 
-  let hasChanged = objects;
-  if (enablePartialUpdates) {
-    setQueryStatus(`Starting Partial updates...`);
-
-    const algoliaObjects = await fetchAlgoliaObjects(indexToUse, matchFields);
-
-    const nbMatchedRecords = Object.keys(algoliaObjects).length;
-    setQueryStatus(`Found ${nbMatchedRecords} existing records`);
-
-    if (nbMatchedRecords) {
-      hasChanged = objects.filter(curObj => {
-        if (matchFields.every(field => Boolean(curObj[field]) === false)) {
-          report.panic(
-            'when enablePartialUpdates is true, the objects must have at least one of the match fields. Current object:\n' +
-              JSON.stringify(curObj, null, 2) +
-              '\n' +
-              'expected one of these fields:\n' +
-              matchFields.join('\n')
-          );
+          // remove from queryResultsMap, since it is already accounted for
+          delete queryResultsMap[id];
+        } else {
+          // check if existing object exists in any new query
+          if (!allObjectsMap.hasOwnProperty(id)) {
+            // existing object not in new queries; remove
+            toRemove[id] = true;
+          }
         }
+      }
 
-        const ID = curObj.objectID;
-        let extObj = algoliaObjects[ID];
-
-        /* The object exists so we don't need to remove it from Algolia */
-        delete algoliaObjects[ID];
-        delete toRemove[ID];
-
-        if (!extObj) return true;
-
-        return matchFields.some(field => extObj[field] !== curObj[field]);
-      });
-
-      Object.keys(algoliaObjects).forEach(objectID => {
-        // if the object has one of the matchFields, it should be removed,
-        // but objects without matchFields are considered "not controlled"
-        // and stay in the index
-        if (matchFields.some(field => algoliaObjects[objectID][field])) {
-          toRemove[objectID] = true;
-        }
-      });
+      if (Object.values(queryResultsMap).length) {
+        // stale objects have been removed, remaining query objects should be indexed
+        toIndex = {
+          ...toIndex,
+          ...queryResultsMap,
+        };
+      }
     }
-
-    setQueryStatus(
-      `Partial updates – [insert/update: ${hasChanged.length}, total: ${objects.length}]`
-    );
   }
 
-  if (hasChanged.length) {
-    const chunks = chunk(hasChanged, chunkSize);
+  const objectsToIndex = Object.values(toIndex);
+  const objectsToRemove = Object.keys(toRemove);
 
-    setQueryStatus(`Splitting in ${chunks.length} jobs`);
+  if (objectsToIndex.length) {
+    const chunks = chunk(objectsToIndex, chunkSize);
+
+    setStatus(
+      activity,
+      `Found ${objectsToIndex.length} new / updated records...`
+    );
+
+    if (chunks.length > 1) {
+      setStatus(activity, `Splitting in ${chunks.length} jobs`);
+    }
 
     /* Add changed / new objects */
     const chunkJobs = chunks.map(async function (chunked) {
@@ -265,33 +232,43 @@ async function doQuery({
 
     await Promise.all(chunkJobs);
   } else {
-    setQueryStatus('No changes; skipping');
+    setStatus(activity, `No updates necessary; skipping!`);
   }
 
-  const settingsToApply = await getSettingsToApply({
-    settings,
-    index,
-    tempIndex,
-    indexToUse,
-  });
+  if (objectsToRemove.length) {
+    setStatus(
+      activity,
+      `Found ${objectsToRemove.length} stale objects; removing...`
+    );
 
-  const { taskID } = await indexToUse.setSettings(settingsToApply, {
-    forwardToReplicas,
-  });
+    const { taskID } = await indexToUse.deleteObjects(objectsToRemove);
+    await indexToUse.waitTask(taskID);
+  }
 
-  await indexToUse.waitTask(taskID);
+  // defer to first query for index settings
+  // todo: maybe iterate over all settings and throw if they differ
+  const { settings = mainSettings, forwardToReplicas } = queries[0] || {};
+
+  if (settings) {
+    const settingsToApply = await getSettingsToApply({
+      settings,
+      index,
+      tempIndex,
+      indexToUse,
+    });
+
+    const { taskID } = await indexToUse.setSettings(settingsToApply, {
+      forwardToReplicas,
+    });
+
+    await indexToUse.waitTask(taskID);
+  }
 
   if (indexToUse === tempIndex) {
-    setQueryStatus('Moving copied index to main index...');
     await moveIndex(client, indexToUse, index);
   }
 
-  setQueryStatus('Done!');
-
-  return {
-    index,
-    toRemove,
-  };
+  setStatus(activity, 'Done!');
 }
 
 /**
@@ -355,8 +332,27 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   return index;
 }
 
-async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
-  const requestedSettings = settings ? settings : await index.getSettings();
+async function getSettingsToApply({
+  settings: givenSettings,
+  index,
+  tempIndex,
+  indexToUse,
+}) {
+  const { replicaUpdateMode, ...settings } = givenSettings;
+  const existingSettings = await index.getSettings().catch(e => {
+    report.panic(`${e.toString()} ${index.indexName}`);
+  });
+
+  const replicasToSet = getReplicasToSet(
+    settings.replicas,
+    existingSettings.replicas,
+    replicaUpdateMode
+  );
+
+  const requestedSettings = {
+    ...(settings ? settings : existingSettings),
+    replicas: replicasToSet,
+  };
 
   // If we're building replicas, we don't want to add them to temporary indices
   if (indexToUse === tempIndex) {
@@ -365,6 +361,61 @@ async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
   }
 
   return requestedSettings;
+}
+
+function getReplicasToSet(
+  givenReplicas = [],
+  existingReplicas = [],
+  replicaUpdateMode = 'merge'
+) {
+  if (replicaUpdateMode == 'replace') {
+    return givenReplicas;
+  }
+
+  if (replicaUpdateMode === 'merge') {
+    const replicas = new Set();
+    existingReplicas.forEach(replica => replicas.add(replica));
+    givenReplicas.forEach(replica => replicas.add(replica));
+
+    return [...replicas];
+  }
+}
+
+async function getObjectsMapByQuery({ query, transformer }, graphql) {
+  const result = await graphql(query);
+  if (result.errors) {
+    report.panic(
+      `failed to index to Algolia, errors:\n ${JSON.stringify(result.errors)}`,
+      result.errors
+    );
+  }
+
+  const objects = (await transformer(result)).map(object => ({
+    objectID: object.objectID || object.id,
+    ...object,
+  }));
+
+  if (objects.length > 0 && !objects[0].objectID) {
+    report.panic(
+      `failed to index to Algolia. Query results do not have 'objectID' or 'id' key`
+    );
+  }
+
+  // return a map by id for later use
+  return Object.fromEntries(objects.map(object => [object.objectID, object]));
+}
+
+// get all match fields for all queries to minimize calls to the api
+function getAllMatchFields(queries, mainMatchFields = []) {
+  const allMatchFields = new Set(mainMatchFields);
+
+  queries.forEach(({ matchFields = [] }) => {
+    matchFields.forEach(field => {
+      allMatchFields.add(field);
+    });
+  });
+
+  return [...allMatchFields];
 }
 
 async function createIndex(index) {
