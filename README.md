@@ -79,6 +79,7 @@ module.exports = {
         enablePartialUpdates: true, // default: false
         matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
         concurrentQueries: false, // default: true
+        skipIndexing: true, // default: false, useful for e.g. preview deploys or local development
       },
     },
   ],

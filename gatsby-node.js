@@ -26,10 +26,22 @@ function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
 }
 
 exports.onPostBuild = async function ({ graphql }, config) {
-  const { appId, apiKey, queries, concurrentQueries = true } = config;
+  const {
+    appId,
+    apiKey,
+    queries,
+    concurrentQueries = true,
+    skipIndexing = false
+  } = config;
 
   const activity = report.activityTimer(`index to Algolia`);
   activity.start();
+
+  if (skipIndexing === true) {
+    setStatus(activity, `options.skipIndexing is true; skipping indexing`);
+    activity.end();
+    return;
+  }
 
   const client = algoliasearch(appId, apiKey);
 
@@ -61,6 +73,7 @@ exports.onPostBuild = async function ({ graphql }, config) {
   } catch (err) {
     report.panic('failed to index to Algolia', err);
   }
+
   activity.end();
 };
 
