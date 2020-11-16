@@ -1,6 +1,6 @@
 {
   "name": "gatsby-plugin-algolia",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "keywords": [
     "gatsby",
     "search",
@@ -20,8 +20,8 @@
   "devDependencies": {
     "standard-version": "^4.4.0"
   },
-  "engines" : { 
-    "node" : ">=12.0.0" 
+  "engines": {
+    "node": ">=12.0.0"
   },
   "scripts": {
     "release": "standard-version"

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.16.1"></a>
+## [0.16.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.0...v0.16.1) (2020-11-16)
+
+
+### Bug Fixes
+
+* **engines:** specify node version ([#107](https://github.com/algolia/gatsby-plugin-algolia/issues/107)) ([8c974fb](https://github.com/algolia/gatsby-plugin-algolia/commit/8c974fb)), closes [#106](https://github.com/algolia/gatsby-plugin-algolia/issues/106)
+
+
+
 <a name="0.16.0"></a>
 # [0.16.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.15.0...v0.16.0) (2020-11-07)
 
