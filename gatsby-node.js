@@ -31,7 +31,7 @@ exports.onPostBuild = async function ({ graphql }, config) {
     apiKey,
     queries,
     concurrentQueries = true,
-    skipIndexing = false
+    skipIndexing = false,
   } = config;
 
   const activity = report.activityTimer(`index to Algolia`);
@@ -402,7 +402,10 @@ async function getObjectsMapByQuery({ query, transformer }, graphql) {
   }
 
   // return a map by id for later use
-  return Object.fromEntries(objects.map(object => [object.objectID, object]));
+  return objects.reduce(
+    (acc, object) => ({ ...acc, [object.objectID]: object }),
+    {}
+  );
 }
 
 // get all match fields for all queries to minimize calls to the api
