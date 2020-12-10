@@ -31,7 +31,8 @@ exports.onPostBuild = async function ({ graphql }, config) {
     apiKey,
     queries,
     concurrentQueries = true,
-    skipIndexing = false
+    skipIndexing = false,
+    continueOnFailure = false,
   } = config;
 
   const activity = report.activityTimer(`index to Algolia`);
@@ -71,7 +72,12 @@ exports.onPostBuild = async function ({ graphql }, config) {
 
     await Promise.all(jobs);
   } catch (err) {
-    report.panic('failed to index to Algolia', err);
+    if (continueOnFailure) {
+      report.warn('failed to index to Algolia')
+      console.error(err)
+    } else {
+      report.panic('failed to index to Algolia', err);
+    }
   }
 
   activity.end();
