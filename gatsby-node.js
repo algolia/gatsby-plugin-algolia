@@ -351,7 +351,7 @@ async function getSettingsToApply({
   );
 
   const requestedSettings = {
-    ...(settings ? settings : existingSettings),
+    ...settings,
     replicas: replicasToSet,
   };
 
