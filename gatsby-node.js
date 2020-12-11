@@ -249,20 +249,18 @@ async function runIndexQueries(
   // todo: maybe iterate over all settings and throw if they differ
   const { settings = mainSettings, forwardToReplicas } = queries[0] || {};
 
-  if (settings) {
-    const settingsToApply = await getSettingsToApply({
-      settings,
-      index,
-      tempIndex,
-      indexToUse,
-    });
+  const settingsToApply = await getSettingsToApply({
+    settings,
+    index,
+    tempIndex,
+    indexToUse,
+  });
 
-    const { taskID } = await indexToUse.setSettings(settingsToApply, {
-      forwardToReplicas,
-    });
+  const { taskID } = await indexToUse.setSettings(settingsToApply, {
+    forwardToReplicas,
+  });
 
-    await indexToUse.waitTask(taskID);
-  }
+  await indexToUse.waitTask(taskID);
 
   if (indexToUse === tempIndex) {
     await moveIndex(client, indexToUse, index);
@@ -333,20 +331,23 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
 }
 
 async function getSettingsToApply({
-  settings: givenSettings,
+  settings,
   index,
   tempIndex,
   indexToUse,
 }) {
-  const { replicaUpdateMode, ...settings } = givenSettings;
   const existingSettings = await index.getSettings().catch(e => {
     report.panic(`${e.toString()} ${index.indexName}`);
   });
 
+  if (!settings) {
+    return existingSettings;
+  }
+
   const replicasToSet = getReplicasToSet(
     settings.replicas,
     existingSettings.replicas,
-    replicaUpdateMode
+    settings.replicaUpdateMode
   );
 
   const requestedSettings = {
