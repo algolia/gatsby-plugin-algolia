@@ -174,7 +174,7 @@ async function runIndexQueries(
           if (!matchFields.every(field => newObj.hasOwnProperty(field))) {
             report.panic(
               'when enablePartialUpdates is true, the objects must have at least one of the match fields. Current object:\n' +
-                JSON.stringify(curObj, null, 2) +
+                JSON.stringify(newObj, null, 2) +
                 '\n' +
                 'expected one of these fields:\n' +
                 matchFields.join('\n')
