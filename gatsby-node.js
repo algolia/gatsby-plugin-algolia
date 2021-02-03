@@ -31,7 +31,7 @@ exports.onPostBuild = async function ({ graphql }, config) {
     apiKey,
     queries,
     concurrentQueries = true,
-    skipIndexing = false
+    skipIndexing = false,
   } = config;
 
   const activity = report.activityTimer(`index to Algolia`);
@@ -249,20 +249,18 @@ async function runIndexQueries(
   // todo: maybe iterate over all settings and throw if they differ
   const { settings = mainSettings, forwardToReplicas } = queries[0] || {};
 
-  if (settings) {
-    const settingsToApply = await getSettingsToApply({
-      settings,
-      index,
-      tempIndex,
-      indexToUse,
-    });
+  const settingsToApply = await getSettingsToApply({
+    settings,
+    index,
+    tempIndex,
+    indexToUse,
+  });
 
-    const { taskID } = await indexToUse.setSettings(settingsToApply, {
-      forwardToReplicas,
-    });
+  const { taskID } = await indexToUse.setSettings(settingsToApply, {
+    forwardToReplicas,
+  });
 
-    await indexToUse.waitTask(taskID);
-  }
+  await indexToUse.waitTask(taskID);
 
   if (indexToUse === tempIndex) {
     await moveIndex(client, indexToUse, index);
@@ -332,25 +330,23 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   return index;
 }
 
-async function getSettingsToApply({
-  settings: givenSettings,
-  index,
-  tempIndex,
-  indexToUse,
-}) {
-  const { replicaUpdateMode, ...settings } = givenSettings;
+async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
   const existingSettings = await index.getSettings().catch(e => {
     report.panic(`${e.toString()} ${index.indexName}`);
   });
 
+  if (!settings) {
+    return existingSettings;
+  }
+
   const replicasToSet = getReplicasToSet(
     settings.replicas,
     existingSettings.replicas,
-    replicaUpdateMode
+    settings.replicaUpdateMode
   );
 
-  const requestedSettings = {
-    ...(settings ? settings : existingSettings),
+  const { replicaUpdateMode, ...requestedSettings } = {
+    ...settings,
     replicas: replicasToSet,
   };
 
