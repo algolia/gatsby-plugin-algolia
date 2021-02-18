@@ -108,6 +108,8 @@ async function runIndexQueries(
     chunkSize = 1000,
     enablePartialUpdates = false,
     matchFields: mainMatchFields = ['modified'],
+    useEnvironment = false,
+    environmentKey = 'environment'
   } = config;
 
   setStatus(
@@ -168,6 +170,9 @@ async function runIndexQueries(
 
       // iterate over existing objects and compare to fresh data
       for (const [id, existingObj] of Object.entries(indexedObjects)) {
+        if (useEnvironment && existingObj[environmentKey] !== useEnvironment) {
+          continue;
+        }
         if (queryResultsMap.hasOwnProperty(id)) {
           // key matches fresh objects, so compare match fields
           const newObj = queryResultsMap[id];
