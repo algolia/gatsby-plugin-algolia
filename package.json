@@ -14,7 +14,7 @@
   "description": "A gatsby plugin to push to Algolia based on a certain query",
   "dependencies": {
     "algoliasearch": "^3.24.5",
-    "gatsby-cli": "^1.1.58",
+    "gatsby-cli": "^2.12.14",
     "lodash.chunk": "^4.2.0"
   },
   "devDependencies": {
