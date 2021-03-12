@@ -43,7 +43,7 @@ exports.onPostBuild = async function ({ graphql }, config) {
     return;
   }
 
-  const client = algoliasearch(appId, apiKey);
+  const client = algoliasearch(appId, apiKey, { timeout: 30_000 });
 
   setStatus(activity, `${queries.length} queries to index`);
 
