@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.16.4"></a>
+## [0.16.4](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.3...v0.16.4) (2021-03-12)
+
+
+### Bug Fixes
+
+* **security:** Update gatsby-cli to patch vulnerability in yargs ([#120](https://github.com/algolia/gatsby-plugin-algolia/issues/120)) ([654a4eb](https://github.com/algolia/gatsby-plugin-algolia/commit/654a4eb))
+
+
+
 <a name="0.16.3"></a>
 ## [0.16.3](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.2...v0.16.3) (2021-02-03)
 
