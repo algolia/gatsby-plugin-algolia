@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.17.0"></a>
+# [0.17.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.5...v0.17.0) (2021-03-12)
+
+
+### Features
+
+* **security:** make gatsby a peer dependency ([251b825](https://github.com/algolia/gatsby-plugin-algolia/commit/251b825))
+
+
+
 <a name="0.16.5"></a>
 ## [0.16.5](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.4...v0.16.5) (2021-03-12)
 
