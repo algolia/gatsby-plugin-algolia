@@ -1,6 +1,7 @@
 const algoliasearch = require('algoliasearch');
 const chunk = require('lodash.chunk');
 const report = require('gatsby-cli/lib/reporter');
+const deepEqual = require('deep-equal');
 
 /**
  * Fetches all records for the current index from Algolia
@@ -181,7 +182,7 @@ async function runIndexQueries(
             );
           }
 
-          if (matchFields.some(field => existingObj[field] !== newObj[field])) {
+          if (matchFields.some(field => !deepEqual(existingObj[field], newObj[field], { strict: true }))) {
             // one or more fields differ, so index new object
             toIndex[id] = newObj;
           } else {
