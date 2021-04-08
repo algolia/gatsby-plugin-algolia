@@ -55,6 +55,7 @@ const queries = [
     indexName: 'index name to target', // overrides main index name, optional
     settings: {
       // optional, any index settings
+      // Note: by supplying settings, you will overwrite all existing settings on the index
     },
     matchFields: ['slug', 'modified'], // Array<String> overrides main match fields, optional
   },
@@ -75,6 +76,7 @@ module.exports = {
         chunkSize: 10000, // default: 1000
         settings: {
           // optional, any index settings
+          // Note: by supplying settings, you will overwrite all existing settings on the index
         },
         enablePartialUpdates: true, // default: false
         matchFields: ['slug', 'modified'], // Array<String> default: ['modified']

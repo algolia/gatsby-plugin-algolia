@@ -1,6 +1,7 @@
 const algoliasearch = require('algoliasearch');
 const chunk = require('lodash.chunk');
 const report = require('gatsby-cli/lib/reporter');
+const deepEqual = require('deep-equal');
 
 /**
  * Fetches all records for the current index from Algolia
@@ -44,7 +45,7 @@ exports.onPostBuild = async function ({ graphql }, config) {
     return;
   }
 
-  const client = algoliasearch(appId, apiKey);
+  const client = algoliasearch(appId, apiKey, { timeout: 30_000 });
 
   setStatus(activity, `${queries.length} queries to index`);
 
@@ -73,8 +74,8 @@ exports.onPostBuild = async function ({ graphql }, config) {
     await Promise.all(jobs);
   } catch (err) {
     if (continueOnFailure) {
-      report.warn('failed to index to Algolia')
-      console.error(err)
+      report.warn('failed to index to Algolia');
+      console.error(err);
     } else {
       report.panic('failed to index to Algolia', err);
     }
@@ -180,14 +181,19 @@ async function runIndexQueries(
           if (!matchFields.every(field => newObj.hasOwnProperty(field))) {
             report.panic(
               'when enablePartialUpdates is true, the objects must have at least one of the match fields. Current object:\n' +
-                JSON.stringify(curObj, null, 2) +
+                JSON.stringify(newObj, null, 2) +
                 '\n' +
                 'expected one of these fields:\n' +
                 matchFields.join('\n')
             );
           }
 
-          if (matchFields.some(field => existingObj[field] !== newObj[field])) {
+          if (
+            matchFields.some(
+              field =>
+                !deepEqual(existingObj[field], newObj[field], { strict: true })
+            )
+          ) {
             // one or more fields differ, so index new object
             toIndex[id] = newObj;
           } else {
@@ -255,20 +261,18 @@ async function runIndexQueries(
   // todo: maybe iterate over all settings and throw if they differ
   const { settings = mainSettings, forwardToReplicas } = queries[0] || {};
 
-  if (settings) {
-    const settingsToApply = await getSettingsToApply({
-      settings,
-      index,
-      tempIndex,
-      indexToUse,
-    });
+  const settingsToApply = await getSettingsToApply({
+    settings,
+    index,
+    tempIndex,
+    indexToUse,
+  });
 
-    const { taskID } = await indexToUse.setSettings(settingsToApply, {
-      forwardToReplicas,
-    });
+  const { taskID } = await indexToUse.setSettings(settingsToApply, {
+    forwardToReplicas,
+  });
 
-    await indexToUse.waitTask(taskID);
-  }
+  await indexToUse.waitTask(taskID);
 
   if (indexToUse === tempIndex) {
     await moveIndex(client, indexToUse, index);
@@ -338,25 +342,23 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   return index;
 }
 
-async function getSettingsToApply({
-  settings: givenSettings,
-  index,
-  tempIndex,
-  indexToUse,
-}) {
-  const { replicaUpdateMode, ...settings } = givenSettings;
+async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
   const existingSettings = await index.getSettings().catch(e => {
     report.panic(`${e.toString()} ${index.indexName}`);
   });
 
+  if (!settings) {
+    return existingSettings;
+  }
+
   const replicasToSet = getReplicasToSet(
     settings.replicas,
     existingSettings.replicas,
-    replicaUpdateMode
+    settings.replicaUpdateMode
   );
 
-  const requestedSettings = {
-    ...(settings ? settings : existingSettings),
+  const { replicaUpdateMode, ...requestedSettings } = {
+    ...settings,
     replicas: replicasToSet,
   };
 
