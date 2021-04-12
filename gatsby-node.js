@@ -116,7 +116,7 @@ async function runIndexQueries(
   } for index ${indexName}...`);
 
   const objectMapsByQuery = await Promise.all(
-    queries.map(query => getObjectsMapByQuery(query, graphql))
+    queries.map(query => getObjectsMapByQuery(query, graphql, reporter))
   );
 
   const allObjectsMap = objectMapsByQuery.reduce((acc, objectsMap = {}) => {
@@ -353,7 +353,7 @@ function getReplicasToSet(
   }
 }
 
-async function getObjectsMapByQuery({ query, transformer, reporter }, graphql) {
+async function getObjectsMapByQuery({ query, transformer }, graphql, reporter) {
   const result = await graphql(query);
   if (result.errors) {
     reporter.panicOnBuild(
