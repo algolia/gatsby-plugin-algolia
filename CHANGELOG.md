@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.18.1"></a>
+## [0.18.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.18.0...v0.18.1) (2021-04-12)
+
+
+### Bug Fixes
+
+* Correct `reporter` usage + set correct peerDep, engines ([#127](https://github.com/algolia/gatsby-plugin-algolia/issues/127)) ([a6ce625](https://github.com/algolia/gatsby-plugin-algolia/commit/a6ce625))
+
+
+
 <a name="0.18.0"></a>
 # [0.18.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.17.0...v0.18.0) (2021-03-30)
 
