@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.18.2"></a>
+## [0.18.2](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.18.1...v0.18.2) (2021-04-13)
+
+
+### Bug Fixes
+
+* enablePartialUpdates requires only one of the matchFields ([#130](https://github.com/algolia/gatsby-plugin-algolia/issues/130)) ([9d3ffc8](https://github.com/algolia/gatsby-plugin-algolia/commit/9d3ffc8)), closes [#128](https://github.com/algolia/gatsby-plugin-algolia/issues/128)
+
+
+
 <a name="0.18.1"></a>
 ## [0.18.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.18.0...v0.18.1) (2021-04-12)
 
