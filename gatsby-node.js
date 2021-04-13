@@ -166,7 +166,7 @@ async function runIndexQueries(
         if (queryResultsMap.hasOwnProperty(id)) {
           // key matches fresh objects, so compare match fields
           const newObj = queryResultsMap[id];
-          if (!matchFields.every(field => newObj.hasOwnProperty(field))) {
+          if (matchFields.every(field => newObj.hasOwnProperty(field) === false)) {
             reporter.panicOnBuild(
               'when enablePartialUpdates is true, the objects must have at least one of the match fields. Current object:\n' +
                 JSON.stringify(newObj, null, 2) +
