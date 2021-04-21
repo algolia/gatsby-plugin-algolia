@@ -1,6 +1,6 @@
 const algoliasearch = require('algoliasearch');
 const chunk = require('lodash.chunk');
-const report = require('gatsby-cli/lib/reporter');
+const deepEqual = require('deep-equal');
 
 /**
  * Fetches all records for the current index from Algolia
@@ -25,27 +25,28 @@ function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
   });
 }
 
-exports.onPostBuild = async function ({ graphql }, config) {
+exports.onPostBuild = async function ({ graphql, reporter }, config) {
   const {
     appId,
     apiKey,
     queries,
     concurrentQueries = true,
     skipIndexing = false,
+    continueOnFailure = false,
   } = config;
 
-  const activity = report.activityTimer(`index to Algolia`);
+  const activity = reporter.activityTimer(`index to Algolia`);
   activity.start();
 
   if (skipIndexing === true) {
-    setStatus(activity, `options.skipIndexing is true; skipping indexing`);
+    activity.setStatus(`options.skipIndexing is true; skipping indexing`);
     activity.end();
     return;
   }
 
-  const client = algoliasearch(appId, apiKey);
+  const client = algoliasearch(appId, apiKey, { timeout: 30_000 });
 
-  setStatus(activity, `${queries.length} queries to index`);
+  activity.setStatus(`${queries.length} queries to index`);
 
   try {
     // combine queries with the same index to prevent overwriting data
@@ -58,6 +59,7 @@ exports.onPostBuild = async function ({ graphql }, config) {
         activity,
         graphql,
         config,
+        reporter,
       });
 
       if (concurrentQueries) {
@@ -71,7 +73,12 @@ exports.onPostBuild = async function ({ graphql }, config) {
 
     await Promise.all(jobs);
   } catch (err) {
-    report.panic('failed to index to Algolia', err);
+    if (continueOnFailure) {
+      report.warn('failed to index to Algolia');
+      console.error(err);
+    } else {
+      activity.panicOnBuild('failed to index to Algolia', err);
+    }
   }
 
   activity.end();
@@ -101,7 +108,7 @@ function groupQueriesByIndex(queries = [], config) {
 async function runIndexQueries(
   indexName,
   queries = [],
-  { client, activity, graphql, config }
+  { client, activity, graphql, reporter, config }
 ) {
   const {
     settings: mainSettings,
@@ -112,15 +119,14 @@ async function runIndexQueries(
     environmentKey = 'environment'
   } = config;
 
-  setStatus(
-    activity,
+  activity.setStatus(
     `Running ${queries.length} ${
       queries.length === 1 ? 'query' : 'queries'
     } for index ${indexName}...`
   );
 
   const objectMapsByQuery = await Promise.all(
-    queries.map(query => getObjectsMapByQuery(query, graphql))
+    queries.map(query => getObjectsMapByQuery(query, graphql, reporter))
   );
 
   const allObjectsMap = objectMapsByQuery.reduce((acc, objectsMap = {}) => {
@@ -130,8 +136,7 @@ async function runIndexQueries(
     };
   }, {});
 
-  setStatus(
-    activity,
+  activity.setStatus(
     `${queries.length === 1 ? 'Query' : 'Queries'} resulted in a total of ${
       Object.keys(allObjectsMap).length
     } results`
@@ -153,7 +158,7 @@ async function runIndexQueries(
     toIndex = { ...allObjectsMap };
   } else {
     // iterate over each query to determine which data are fresh
-    setStatus(activity, `Starting Partial updates...`);
+    activity.setStatus(`Starting Partial updates...`);
 
     // get all match fields for all queries to minimize calls to the api
     const allMatchFields = getAllMatchFields(queries, mainMatchFields);
@@ -176,8 +181,10 @@ async function runIndexQueries(
         if (queryResultsMap.hasOwnProperty(id)) {
           // key matches fresh objects, so compare match fields
           const newObj = queryResultsMap[id];
-          if (!matchFields.every(field => newObj.hasOwnProperty(field))) {
-            report.panic(
+          if (
+            matchFields.every(field => newObj.hasOwnProperty(field) === false)
+          ) {
+            reporter.panicOnBuild(
               'when enablePartialUpdates is true, the objects must have at least one of the match fields. Current object:\n' +
                 JSON.stringify(newObj, null, 2) +
                 '\n' +
@@ -186,7 +193,12 @@ async function runIndexQueries(
             );
           }
 
-          if (matchFields.some(field => existingObj[field] !== newObj[field])) {
+          if (
+            matchFields.some(
+              field =>
+                !deepEqual(existingObj[field], newObj[field], { strict: true })
+            )
+          ) {
             // one or more fields differ, so index new object
             toIndex[id] = newObj;
           } else {
@@ -220,13 +232,12 @@ async function runIndexQueries(
   if (objectsToIndex.length) {
     const chunks = chunk(objectsToIndex, chunkSize);
 
-    setStatus(
-      activity,
+    activity.setStatus(
       `Found ${objectsToIndex.length} new / updated records...`
     );
 
     if (chunks.length > 1) {
-      setStatus(activity, `Splitting in ${chunks.length} jobs`);
+      activity.setStatus(`Splitting in ${chunks.length} jobs`);
     }
 
     /* Add changed / new objects */
@@ -237,12 +248,11 @@ async function runIndexQueries(
 
     await Promise.all(chunkJobs);
   } else {
-    setStatus(activity, `No updates necessary; skipping!`);
+    activity.setStatus(`No updates necessary; skipping!`);
   }
 
   if (objectsToRemove.length) {
-    setStatus(
-      activity,
+    activity.setStatus(
       `Found ${objectsToRemove.length} stale objects; removing...`
     );
 
@@ -259,6 +269,7 @@ async function runIndexQueries(
     index,
     tempIndex,
     indexToUse,
+    reporter,
   });
 
   const { taskID } = await indexToUse.setSettings(settingsToApply, {
@@ -271,7 +282,7 @@ async function runIndexQueries(
     await moveIndex(client, indexToUse, index);
   }
 
-  setStatus(activity, 'Done!');
+  activity.setStatus('Done!');
 }
 
 /**
@@ -307,20 +318,6 @@ function indexExists(index) {
     });
 }
 
-/**
- * Hotfix the Gatsby reporter to allow setting status (not supported everywhere)
- *
- * @param {Object} activity reporter
- * @param {String} status status to report
- */
-function setStatus(activity, status) {
-  if (activity && activity.setStatus) {
-    activity.setStatus(status);
-  } else {
-    console.log('[Algolia]', status);
-  }
-}
-
 async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   const mainIndexExists = await indexExists(index);
 
@@ -335,9 +332,15 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   return index;
 }
 
-async function getSettingsToApply({ settings, index, tempIndex, indexToUse }) {
+async function getSettingsToApply({
+  settings,
+  index,
+  tempIndex,
+  indexToUse,
+  reporter,
+}) {
   const existingSettings = await index.getSettings().catch(e => {
-    report.panic(`${e.toString()} ${index.indexName}`);
+    reporter.panicOnBuild(`${e.toString()} ${index.indexName}`);
   });
 
   if (!settings) {
@@ -382,10 +385,10 @@ function getReplicasToSet(
   }
 }
 
-async function getObjectsMapByQuery({ query, transformer }, graphql) {
+async function getObjectsMapByQuery({ query, transformer }, graphql, reporter) {
   const result = await graphql(query);
   if (result.errors) {
-    report.panic(
+    reporter.panicOnBuild(
       `failed to index to Algolia, errors:\n ${JSON.stringify(result.errors)}`,
       result.errors
     );
@@ -397,7 +400,7 @@ async function getObjectsMapByQuery({ query, transformer }, graphql) {
   }));
 
   if (objects.length > 0 && !objects[0].objectID) {
-    report.panic(
+    reporter.panicOnBuild(
       `failed to index to Algolia. Query results do not have 'objectID' or 'id' key`
     );
   }

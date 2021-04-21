@@ -11,14 +11,9 @@ const query = `{
         # be inserted by Algolia automatically
         # and will be less simple to update etc.
         objectID: id
-        component
         path
-        componentChunkName
-        jsonName
         internal {
-          type
           contentDigest
-          owner
         }
       }
     }
@@ -28,8 +23,14 @@ const query = `{
 const queries = [
   {
     query,
-    transformer: ({ data }) => data.allSitePage.edges.map(({ node }) => node), // optional
-    // indexName: 'pages', // optional
+    transformer: ({ data }) =>
+      data.allSitePage.edges.map(({ node: { internal, ...node } }) => ({
+        ...node,
+        contentDigest: internal.contentDigest,
+      })),
+    // optional
+    // indexName: 'pages',
+    // optional
     settings: {
       attributesToSnippet: ['path:5', 'internal'],
     },
@@ -52,7 +53,7 @@ module.exports = {
         queries,
         chunkSize: 10000, // default: 1000
         enablePartialUpdates: true, // default: false
-        matchFields: ['matchFields'],
+        matchFields: ['contentDigest'],
       },
     },
   ],

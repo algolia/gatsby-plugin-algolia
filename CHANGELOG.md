@@ -2,6 +2,76 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.19.0"></a>
+# [0.19.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.18.2...v0.19.0) (2021-04-14)
+
+
+### Features
+
+* add continueOnError flag ([#111](https://github.com/algolia/gatsby-plugin-algolia/issues/111)) ([3e438a8](https://github.com/algolia/gatsby-plugin-algolia/commit/3e438a8))
+
+
+
+<a name="0.18.2"></a>
+## [0.18.2](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.18.1...v0.18.2) (2021-04-13)
+
+
+### Bug Fixes
+
+* enablePartialUpdates requires only one of the matchFields ([#130](https://github.com/algolia/gatsby-plugin-algolia/issues/130)) ([9d3ffc8](https://github.com/algolia/gatsby-plugin-algolia/commit/9d3ffc8)), closes [#128](https://github.com/algolia/gatsby-plugin-algolia/issues/128)
+
+
+
+<a name="0.18.1"></a>
+## [0.18.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.18.0...v0.18.1) (2021-04-12)
+
+
+### Bug Fixes
+
+* Correct `reporter` usage + set correct peerDep, engines ([#127](https://github.com/algolia/gatsby-plugin-algolia/issues/127)) ([a6ce625](https://github.com/algolia/gatsby-plugin-algolia/commit/a6ce625))
+
+
+
+<a name="0.18.0"></a>
+# [0.18.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.17.0...v0.18.0) (2021-03-30)
+
+
+### Features
+
+* deep compare matchFields ([#124](https://github.com/algolia/gatsby-plugin-algolia/issues/124)) ([ca3b967](https://github.com/algolia/gatsby-plugin-algolia/commit/ca3b967))
+
+
+
+<a name="0.17.0"></a>
+# [0.17.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.5...v0.17.0) (2021-03-12)
+
+
+### Features
+
+* **security:** make gatsby a peer dependency ([251b825](https://github.com/algolia/gatsby-plugin-algolia/commit/251b825))
+
+
+
+<a name="0.16.5"></a>
+## [0.16.5](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.4...v0.16.5) (2021-03-12)
+
+
+### Bug Fixes
+
+* **performance:** allow a slower response to avoid timeouts ([7641b45](https://github.com/algolia/gatsby-plugin-algolia/commit/7641b45))
+
+
+
+<a name="0.16.4"></a>
+## [0.16.4](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.3...v0.16.4) (2021-03-12)
+
+
+### Bug Fixes
+
+* **security:** Update gatsby-cli to patch vulnerability in yargs ([#120](https://github.com/algolia/gatsby-plugin-algolia/issues/120)) ([654a4eb](https://github.com/algolia/gatsby-plugin-algolia/commit/654a4eb))
+
+
+
 <a name="0.16.3"></a>
 ## [0.16.3](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.16.2...v0.16.3) (2021-02-03)
 

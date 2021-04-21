@@ -2,15 +2,12 @@
   "name": "gatsby-starter-default",
   "description": "Gatsby default starter",
   "version": "1.0.0",
-  "author": "Kyle Mathews <mathews.kyle@gmail.com>",
   "dependencies": {
-    "gatsby": "^1.9.277",
-    "gatsby-link": "^1.6.46",
-    "gatsby-plugin-algolia": "^0.12.0"
+    "gatsby": "^2.32.12",
+    "gatsby-plugin-algolia": "^0.12.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   },
-  "keywords": [
-    "gatsby"
-  ],
   "license": "MIT",
   "scripts": {
     "build": "gatsby build",
@@ -21,9 +18,5 @@
   "devDependencies": {
     "dotenv": "^6.0.0",
     "prettier": "^1.13.7"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/gatsbyjs/gatsby-starter-default"
   }
 }
