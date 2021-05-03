@@ -32,6 +32,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     queries,
     concurrentQueries = true,
     skipIndexing = false,
+    dryRun = false,
     continueOnFailure = false,
   } = config;
 
@@ -42,6 +43,15 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     activity.setStatus(`options.skipIndexing is true; skipping indexing`);
     activity.end();
     return;
+  }
+
+  if (dryRun === true) {
+    console.log(
+      '\x1b[33m%s\x1b[0m',
+      '==== THIS IS A DRY RUN ====================\n' +
+        '- No records will be pushed to your index\n' +
+        '- No settings will be updated on your index'
+    );
   }
 
   const client = algoliasearch(appId, apiKey, { timeout: 30_000 });
@@ -60,6 +70,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
         graphql,
         config,
         reporter,
+        dryRun,
       });
 
       if (concurrentQueries) {
@@ -108,7 +119,7 @@ function groupQueriesByIndex(queries = [], config) {
 async function runIndexQueries(
   indexName,
   queries = [],
-  { client, activity, graphql, reporter, config }
+  { client, activity, graphql, reporter, config, dryRun }
 ) {
   const {
     settings: mainSettings,
@@ -237,8 +248,12 @@ async function runIndexQueries(
 
     /* Add changed / new objects */
     const chunkJobs = chunks.map(async function (chunked) {
-      const { taskID } = await indexToUse.addObjects(chunked);
-      return indexToUse.waitTask(taskID);
+      if (dryRun === true) {
+        reporter.info(`Records to add: ${objectsToIndex.length}`);
+      } else {
+        const { taskID } = await indexToUse.addObjects(chunked);
+        return indexToUse.waitTask(taskID);
+      }
     });
 
     await Promise.all(chunkJobs);
@@ -250,9 +265,12 @@ async function runIndexQueries(
     activity.setStatus(
       `Found ${objectsToRemove.length} stale objects; removing...`
     );
-
-    const { taskID } = await indexToUse.deleteObjects(objectsToRemove);
-    await indexToUse.waitTask(taskID);
+    if (dryRun === true) {
+      reporter.info(`Records to delete: ${objectsToRemove.length}`);
+    } else {
+      const { taskID } = await indexToUse.deleteObjects(objectsToRemove);
+      await indexToUse.waitTask(taskID);
+    }
   }
 
   // defer to first query for index settings
@@ -267,13 +285,15 @@ async function runIndexQueries(
     reporter,
   });
 
-  const { taskID } = await indexToUse.setSettings(settingsToApply, {
-    forwardToReplicas,
-  });
+  if (dryRun === false) {
+    const { taskID } = await indexToUse.setSettings(settingsToApply, {
+      forwardToReplicas,
+    });
 
-  await indexToUse.waitTask(taskID);
+    await indexToUse.waitTask(taskID);
+  }
 
-  if (indexToUse === tempIndex) {
+  if (indexToUse === tempIndex && dryRun === false) {
     await moveIndex(client, indexToUse, index);
   }
 
