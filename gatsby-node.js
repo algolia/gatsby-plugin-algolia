@@ -10,18 +10,24 @@ const deepEqual = require('deep-equal');
  */
 function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
   return new Promise((resolve, reject) => {
-    const browser = index.browseAll('', { attributesToRetrieve });
     const hits = {};
 
-    browser.on('result', content => {
-      if (Array.isArray(content.hits)) {
-        content.hits.forEach(hit => {
-          hits[hit.objectID] = hit;
-        });
-      }
-    });
-    browser.on('end', () => resolve(hits));
-    browser.on('error', err => reject(err));
+    index
+      .browseObjects({
+        batch: batch => {
+          if (Array.isArray(batch)) {
+            batch.forEach(hit => {
+              hits[hit.objectID] = hit;
+            });
+          }
+        },
+      })
+      .then(() => {
+        return resolve(hits);
+      })
+      .catch(err => {
+        return reject(err);
+      });
   });
 }
 
@@ -44,7 +50,13 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     return;
   }
 
-  const client = algoliasearch(appId, apiKey, { timeout: 30_000 });
+  const client = algoliasearch(appId, apiKey, {
+    timeouts: {
+      connect: 1,
+      read: 30,
+      write: 30,
+    },
+  });
 
   activity.setStatus(`${queries.length} queries to index`);
 
@@ -237,8 +249,9 @@ async function runIndexQueries(
 
     /* Add changed / new objects */
     const chunkJobs = chunks.map(async function (chunked) {
-      const { taskID } = await indexToUse.addObjects(chunked);
-      return indexToUse.waitTask(taskID);
+      await indexToUse.saveObjects(chunked, {
+        autoGenerateObjectIDIfNotExist: true,
+      });
     });
 
     await Promise.all(chunkJobs);
@@ -251,8 +264,7 @@ async function runIndexQueries(
       `Found ${objectsToRemove.length} stale objects; removing...`
     );
 
-    const { taskID } = await indexToUse.deleteObjects(objectsToRemove);
-    await indexToUse.waitTask(taskID);
+    await indexToUse.deleteObjects(objectsToRemove);
   }
 
   // defer to first query for index settings
@@ -267,11 +279,9 @@ async function runIndexQueries(
     reporter,
   });
 
-  const { taskID } = await indexToUse.setSettings(settingsToApply, {
+  await indexToUse.setSettings(settingsToApply, {
     forwardToReplicas,
   });
-
-  await indexToUse.waitTask(taskID);
 
   if (indexToUse === tempIndex) {
     await moveIndex(client, indexToUse, index);
@@ -288,11 +298,7 @@ async function runIndexQueries(
  * @return {Promise}
  */
 async function moveIndex(client, sourceIndex, targetIndex) {
-  const { taskID } = await client.moveIndex(
-    sourceIndex.indexName,
-    targetIndex.indexName
-  );
-  return targetIndex.waitTask(taskID);
+  await client.moveIndex(sourceIndex.indexName, targetIndex.indexName);
 }
 
 /**
@@ -418,7 +424,6 @@ function getAllMatchFields(queries, mainMatchFields = []) {
 }
 
 async function createIndex(index) {
-  const { taskID } = await index.setSettings({});
-  await index.waitTask(taskID);
+  await index.setSettings({});
   return index;
 }
