@@ -8,21 +8,28 @@ const deepEqual = require('deep-equal');
  * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
  * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
  */
-function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
-  return new Promise((resolve, reject) => {
-    const browser = index.browseAll('', { attributesToRetrieve });
-    const hits = {};
+function fetchAlgoliaObjects(
+  index,
+  attributesToRetrieve = ['modified'],
+  reporter
+) {
+  const hits = {};
 
-    browser.on('result', content => {
-      if (Array.isArray(content.hits)) {
-        content.hits.forEach(hit => {
-          hits[hit.objectID] = hit;
-        });
-      }
-    });
-    browser.on('end', () => resolve(hits));
-    browser.on('error', err => reject(err));
-  });
+  return index
+    .browseObjects({
+      batch: batch => {
+        if (Array.isArray(batch)) {
+          batch.forEach(hit => {
+            hits[hit.objectID] = hit;
+          });
+        }
+      },
+      attributesToRetrieve,
+    })
+    .then(() => hits)
+    .catch(err =>
+      reporter.panicOnBuild('failed while getting indexed objects', err)
+    );
 }
 
 exports.onPostBuild = async function ({ graphql, reporter }, config) {
@@ -54,7 +61,13 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     );
   }
 
-  const client = algoliasearch(appId, apiKey, { timeout: 30_000 });
+  const client = algoliasearch(appId, apiKey, {
+    timeouts: {
+      connect: 1,
+      read: 30,
+      write: 30,
+    },
+  });
 
   activity.setStatus(`${queries.length} queries to index`);
 
@@ -175,7 +188,8 @@ async function runIndexQueries(
     // get all indexed objects matching all matched fields
     const indexedObjects = await fetchAlgoliaObjects(
       indexToUse,
-      allMatchFields
+      allMatchFields,
+      reporter
     );
 
     // iterate over each query
@@ -251,8 +265,7 @@ async function runIndexQueries(
       if (dryRun === true) {
         reporter.info(`Records to add: ${objectsToIndex.length}`);
       } else {
-        const { taskID } = await indexToUse.addObjects(chunked);
-        return indexToUse.waitTask(taskID);
+        await indexToUse.saveObjects(chunked);
       }
     });
 
@@ -265,11 +278,11 @@ async function runIndexQueries(
     activity.setStatus(
       `Found ${objectsToRemove.length} stale objects; removing...`
     );
+
     if (dryRun === true) {
       reporter.info(`Records to delete: ${objectsToRemove.length}`);
     } else {
-      const { taskID } = await indexToUse.deleteObjects(objectsToRemove);
-      await indexToUse.waitTask(taskID);
+      await indexToUse.deleteObjects(objectsToRemove).wait();
     }
   }
 
@@ -286,11 +299,11 @@ async function runIndexQueries(
   });
 
   if (dryRun === false) {
-    const { taskID } = await indexToUse.setSettings(settingsToApply, {
-      forwardToReplicas,
-    });
-
-    await indexToUse.waitTask(taskID);
+    await indexToUse
+      .setSettings(settingsToApply, {
+        forwardToReplicas,
+      })
+      .wait();
   }
 
   if (indexToUse === tempIndex && dryRun === false) {
@@ -308,11 +321,7 @@ async function runIndexQueries(
  * @return {Promise}
  */
 async function moveIndex(client, sourceIndex, targetIndex) {
-  const { taskID } = await client.moveIndex(
-    sourceIndex.indexName,
-    targetIndex.indexName
-  );
-  return targetIndex.waitTask(taskID);
+  return client.moveIndex(sourceIndex.indexName, targetIndex.indexName).wait();
 }
 
 /**
@@ -438,7 +447,6 @@ function getAllMatchFields(queries, mainMatchFields = []) {
 }
 
 async function createIndex(index) {
-  const { taskID } = await index.setSettings({});
-  await index.waitTask(taskID);
+  await index.setSettings({}).wait();
   return index;
 }
