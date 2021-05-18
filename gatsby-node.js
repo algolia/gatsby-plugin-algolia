@@ -8,27 +8,28 @@ const deepEqual = require('deep-equal');
  * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
  * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
  */
-function fetchAlgoliaObjects(index, attributesToRetrieve = ['modified']) {
-  return new Promise((resolve, reject) => {
-    const hits = {};
+function fetchAlgoliaObjects(
+  index,
+  attributesToRetrieve = ['modified'],
+  reporter
+) {
+  const hits = {};
 
-    index
-      .browseObjects({
-        batch: batch => {
-          if (Array.isArray(batch)) {
-            batch.forEach(hit => {
-              hits[hit.objectID] = hit;
-            });
-          }
-        },
-      })
-      .then(() => {
-        return resolve(hits);
-      })
-      .catch(err => {
-        return reject(err);
-      });
-  });
+  return index
+    .browseObjects({
+      batch: batch => {
+        if (Array.isArray(batch)) {
+          batch.forEach(hit => {
+            hits[hit.objectID] = hit;
+          });
+        }
+      },
+      attributesToRetrieve,
+    })
+    .then(() => hits)
+    .catch(err =>
+      reporter.panicOnBuild('failed while getting indexed objects', err)
+    );
 }
 
 exports.onPostBuild = async function ({ graphql, reporter }, config) {
@@ -176,7 +177,8 @@ async function runIndexQueries(
     // get all indexed objects matching all matched fields
     const indexedObjects = await fetchAlgoliaObjects(
       indexToUse,
-      allMatchFields
+      allMatchFields,
+      reporter
     );
 
     // iterate over each query
@@ -249,9 +251,7 @@ async function runIndexQueries(
 
     /* Add changed / new objects */
     const chunkJobs = chunks.map(async function (chunked) {
-      await indexToUse.saveObjects(chunked, {
-        autoGenerateObjectIDIfNotExist: true,
-      });
+      await indexToUse.saveObjects(chunked);
     });
 
     await Promise.all(chunkJobs);
@@ -264,7 +264,7 @@ async function runIndexQueries(
       `Found ${objectsToRemove.length} stale objects; removing...`
     );
 
-    await indexToUse.deleteObjects(objectsToRemove);
+    await indexToUse.deleteObjects(objectsToRemove).wait();
   }
 
   // defer to first query for index settings
@@ -279,9 +279,11 @@ async function runIndexQueries(
     reporter,
   });
 
-  await indexToUse.setSettings(settingsToApply, {
-    forwardToReplicas,
-  });
+  await indexToUse
+    .setSettings(settingsToApply, {
+      forwardToReplicas,
+    })
+    .wait();
 
   if (indexToUse === tempIndex) {
     await moveIndex(client, indexToUse, index);
@@ -298,7 +300,7 @@ async function runIndexQueries(
  * @return {Promise}
  */
 async function moveIndex(client, sourceIndex, targetIndex) {
-  await client.moveIndex(sourceIndex.indexName, targetIndex.indexName);
+  return client.moveIndex(sourceIndex.indexName, targetIndex.indexName).wait();
 }
 
 /**
@@ -424,6 +426,6 @@ function getAllMatchFields(queries, mainMatchFields = []) {
 }
 
 async function createIndex(index) {
-  await index.setSettings({});
+  await index.setSettings({}).wait();
   return index;
 }
