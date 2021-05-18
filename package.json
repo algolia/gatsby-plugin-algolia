@@ -13,7 +13,7 @@
   "author": "Algolia",
   "description": "A gatsby plugin to push to Algolia based on a certain query",
   "dependencies": {
-    "algoliasearch": "^3.24.5",
+    "algoliasearch": "^4.9.1",
     "deep-equal": "^2.0.5",
     "lodash.chunk": "^4.2.0"
   },
