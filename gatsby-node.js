@@ -39,6 +39,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     queries,
     concurrentQueries = true,
     skipIndexing = false,
+    dryRun = false,
     continueOnFailure = false,
   } = config;
 
@@ -49,6 +50,15 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     activity.setStatus(`options.skipIndexing is true; skipping indexing`);
     activity.end();
     return;
+  }
+
+  if (dryRun === true) {
+    console.log(
+      '\x1b[33m%s\x1b[0m',
+      '==== THIS IS A DRY RUN ====================\n' +
+        '- No records will be pushed to your index\n' +
+        '- No settings will be updated on your index'
+    );
   }
 
   const client = algoliasearch(appId, apiKey, {
@@ -73,6 +83,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
         graphql,
         config,
         reporter,
+        dryRun,
       });
 
       if (concurrentQueries) {
@@ -121,7 +132,7 @@ function groupQueriesByIndex(queries = [], config) {
 async function runIndexQueries(
   indexName,
   queries = [],
-  { client, activity, graphql, reporter, config }
+  { client, activity, graphql, reporter, config, dryRun }
 ) {
   const {
     settings: mainSettings,
@@ -251,7 +262,11 @@ async function runIndexQueries(
 
     /* Add changed / new objects */
     const chunkJobs = chunks.map(async function (chunked) {
-      await indexToUse.saveObjects(chunked);
+      if (dryRun === true) {
+        reporter.info(`Records to add: ${objectsToIndex.length}`);
+      } else {
+        await indexToUse.saveObjects(chunked);
+      }
     });
 
     await Promise.all(chunkJobs);
@@ -264,7 +279,11 @@ async function runIndexQueries(
       `Found ${objectsToRemove.length} stale objects; removing...`
     );
 
-    await indexToUse.deleteObjects(objectsToRemove).wait();
+    if (dryRun === true) {
+      reporter.info(`Records to delete: ${objectsToRemove.length}`);
+    } else {
+      await indexToUse.deleteObjects(objectsToRemove).wait();
+    }
   }
 
   // defer to first query for index settings
@@ -279,13 +298,15 @@ async function runIndexQueries(
     reporter,
   });
 
-  await indexToUse
-    .setSettings(settingsToApply, {
-      forwardToReplicas,
-    })
-    .wait();
+  if (dryRun === false) {
+    await indexToUse
+      .setSettings(settingsToApply, {
+        forwardToReplicas,
+      })
+      .wait();
+  }
 
-  if (indexToUse === tempIndex) {
+  if (indexToUse === tempIndex && dryRun === false) {
     await moveIndex(client, indexToUse, index);
   }
 
