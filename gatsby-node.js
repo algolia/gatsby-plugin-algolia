@@ -98,7 +98,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     await Promise.all(jobs);
   } catch (err) {
     if (continueOnFailure) {
-      report.warn('failed to index to Algolia');
+      reporter.warn('failed to index to Algolia');
       console.error(err);
     } else {
       activity.panicOnBuild('failed to index to Algolia', err);
