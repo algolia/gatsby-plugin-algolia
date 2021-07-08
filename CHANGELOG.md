@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.21.0"></a>
+# [0.21.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.20.1...v0.21.0) (2021-07-08)
+
+
+### Bug Fixes
+
+* **settings:** forward rules and synonyms to index to write ([ad7e076](https://github.com/algolia/gatsby-plugin-algolia/commit/ad7e076))
+
+
+
 <a name="0.20.1"></a>
 ## [0.20.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.20.0...v0.20.1) (2021-05-31)
 
