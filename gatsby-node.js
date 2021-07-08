@@ -327,34 +327,6 @@ async function runIndexQueries(
       .wait();
   }
 
-  const rulesToApply = await getRulesToApply({
-    index,
-  });
-
-  if (dryRun) {
-    console.log('[dry run]: rules', rulesToApply);
-  } else {
-    await indexToUse
-      .saveRules(rulesToApply, {
-        forwardToReplicas,
-      })
-      .wait();
-  }
-
-  const synonymsToApply = await getSynonymsToApply({
-    index,
-  });
-
-  if (dryRun) {
-    console.log('[dry run]: synonyms', synonymsToApply);
-  } else {
-    await indexToUse
-      .saveSynonyms(synonymsToApply, {
-        forwardToReplicas,
-      })
-      .wait();
-  }
-
   if (indexToUse === tempIndex && dryRun === false) {
     await moveIndex(client, indexToUse, index);
   }
@@ -370,6 +342,13 @@ async function runIndexQueries(
  * @return {Promise}
  */
 async function moveIndex(client, sourceIndex, targetIndex) {
+  // first copy the rules and synonyms to the temporary index, as we don't want
+  // to touch the original index, and there's no way to only move objects and
+  // settings, leaving rules and synonyms in place.
+  await client.copyIndex(targetIndex.indexName, sourceIndex.indexName, {
+    scope: ['rules', 'synonyms'],
+  });
+
   return client.moveIndex(sourceIndex.indexName, targetIndex.indexName).wait();
 }
 
@@ -472,46 +451,6 @@ function getReplicasToSet(
 
     return [...replicas];
   }
-}
-
-/**
- * @param {object} options
- * @param {import('algoliasearch').SearchIndex} options.index
- * @returns {import('@algolia/client-search').Rule[]}
- */
-async function getRulesToApply({ index }) {
-  const existingRules = [];
-  await index
-    .browseRules({
-      batch(rules) {
-        existingRules.push(...rules);
-      },
-    })
-    .catch(e => {
-      reporter.panicOnBuild(`${e.toString()} ${index.indexName}`);
-    });
-
-  return existingRules;
-}
-
-/**
- * @param {object} options
- * @param {import('algoliasearch').SearchIndex} options.index
- * @returns {import('@algolia/client-search').Synonym[]}
- */
- async function getSynonymsToApply({ index }) {
-  const existingSynonyms = [];
-  await index
-    .browseSynonyms({
-      batch(synonyms) {
-        existingSynonyms.push(...synonyms);
-      },
-    })
-    .catch(e => {
-      reporter.panicOnBuild(`${e.toString()} ${index.indexName}`);
-    });
-
-  return existingSynonyms;
 }
 
 async function getObjectsMapByQuery({ query, transformer }, graphql, reporter) {
