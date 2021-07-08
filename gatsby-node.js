@@ -138,6 +138,7 @@ async function runIndexQueries(
     settings: mainSettings,
     chunkSize = 1000,
     enablePartialUpdates = false,
+    copyRules = false,
     matchFields: mainMatchFields = ['modified'],
   } = config;
 
@@ -171,6 +172,12 @@ async function runIndexQueries(
     tempIndex,
     enablePartialUpdates,
   });
+
+   // copy any rules to the new temp index
+   if (copyRules) {
+    activity.setStatus(`Copying Rules!`);
+    await client.copyRules(index.indexName,tempIndex.indexName).wait();
+  }
 
   let toIndex = {}; // used to track objects that should be added / updated
   const toRemove = {}; // used to track objects that are stale and should be removed

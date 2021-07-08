@@ -53,6 +53,7 @@ module.exports = {
         queries,
         chunkSize: 10000, // default: 1000
         enablePartialUpdates: true, // default: false
+        copyRules: true, // you may wish to keep the index rules when creating it
         matchFields: ['contentDigest'],
       },
     },
