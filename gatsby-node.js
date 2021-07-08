@@ -128,6 +128,15 @@ function groupQueriesByIndex(queries = [], config) {
 
 /**
  * Run all queries for a given index, then make any updates / removals necessary
+ * @param {string} indexName
+ * @param {string[]} queries
+ * @param {object} options
+ * @param {import('algoliasearch').SearchClient} options.client
+ * @param {any} options.activity
+ * @param {any} options.graphql
+ * @param {any} options.reporter
+ * @param {any} options.config
+ * @param {boolean=} options.dryRun
  */
 async function runIndexQueries(
   indexName,
@@ -298,9 +307,49 @@ async function runIndexQueries(
     reporter,
   });
 
-  if (dryRun === false) {
+  if (dryRun) {
+    console.log('[dry run]: settings', settingsToApply);
+  } else {
     await indexToUse
       .setSettings(settingsToApply, {
+        forwardToReplicas,
+      })
+      .wait();
+  }
+
+  if (dryRun) {
+    console.log('[dry run]: settings', settingsToApply);
+  } else {
+    await indexToUse
+      .setSettings(settingsToApply, {
+        forwardToReplicas,
+      })
+      .wait();
+  }
+
+  const rulesToApply = await getRulesToApply({
+    index,
+  });
+
+  if (dryRun) {
+    console.log('[dry run]: rules', rulesToApply);
+  } else {
+    await indexToUse
+      .saveRules(rulesToApply, {
+        forwardToReplicas,
+      })
+      .wait();
+  }
+
+  const synonymsToApply = await getSynonymsToApply({
+    index,
+  });
+
+  if (dryRun) {
+    console.log('[dry run]: synonyms', synonymsToApply);
+  } else {
+    await indexToUse
+      .saveSynonyms(synonymsToApply, {
         forwardToReplicas,
       })
       .wait();
@@ -342,6 +391,13 @@ function indexExists(index) {
     });
 }
 
+/**
+ * @param {object} options
+ * @param {import('algoliasearch').SearchIndex} options.index
+ * @param {import('algoliasearch').SearchIndex} options.tempIndex
+ * @param {boolean=} options.enablePartialUpdates
+ * @returns {Promise<import('algoliasearch').SearchIndex>}
+ */
 async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   const mainIndexExists = await indexExists(index);
 
@@ -356,6 +412,15 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
   return index;
 }
 
+/**
+ * @param {object} options
+ * @param {import('@algolia/client-search').Settings} options.settings
+ * @param {import('algoliasearch').SearchIndex} options.index
+ * @param {import('algoliasearch').SearchIndex} options.tempIndex
+ * @param {import('algoliasearch').SearchIndex} options.indexToUse
+ * @param {any} options.reporter
+ * @returns {import('@algolia/client-search').Settings}
+ */
 async function getSettingsToApply({
   settings,
   index,
@@ -407,6 +472,46 @@ function getReplicasToSet(
 
     return [...replicas];
   }
+}
+
+/**
+ * @param {object} options
+ * @param {import('algoliasearch').SearchIndex} options.index
+ * @returns {import('@algolia/client-search').Rule[]}
+ */
+async function getRulesToApply({ index }) {
+  const existingRules = [];
+  await index
+    .browseRules({
+      batch(rules) {
+        existingRules.push(...rules);
+      },
+    })
+    .catch(e => {
+      reporter.panicOnBuild(`${e.toString()} ${index.indexName}`);
+    });
+
+  return existingRules;
+}
+
+/**
+ * @param {object} options
+ * @param {import('algoliasearch').SearchIndex} options.index
+ * @returns {import('@algolia/client-search').Synonym[]}
+ */
+ async function getSynonymsToApply({ index }) {
+  const existingSynonyms = [];
+  await index
+    .browseSynonyms({
+      batch(synonyms) {
+        existingSynonyms.push(...synonyms);
+      },
+    })
+    .catch(e => {
+      reporter.panicOnBuild(`${e.toString()} ${index.indexName}`);
+    });
+
+  return existingSynonyms;
 }
 
 async function getObjectsMapByQuery({ query, transformer }, graphql, reporter) {
