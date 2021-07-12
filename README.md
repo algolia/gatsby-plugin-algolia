@@ -82,7 +82,9 @@ module.exports = {
         matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
         concurrentQueries: false, // default: true
         skipIndexing: true, // default: false, useful for e.g. preview deploys or local development
-        continueOnFailure: false // default: false, don't fail the build if algolia indexing fails
+        continueOnFailure: false, // default: false, don't fail the build if algolia indexing fails
+        useEnvironment: 'blog', // default: false, used in conjunction with enablePartialUpdates let you persist entries from different environment
+        environmentKey: 'product', // default: 'environment', key used when useEnvironment is set.
       },
     },
   ],
@@ -127,6 +129,9 @@ For replica settings, extra care is taken to make sure only apply replicas to no
 If you pass `replicaUpdateMode: 'replace'` in the index settings, you can choose to update the replicas fully with those in the settings.
 
 If you pass `replicaUpdateMode: 'merge'` in the index settings, the replica settings will combine the replicas set on your dashboard with the additional ones you set via index settings here.
+
+### Persisting entries
+If you want to persist entries that are added to the index (for example added by the different gatsby instance if your index is combining several websites) you can set `useEnvironment` to unique string that represents given instance. All entries with different `environment` value will be ignored. You can change the key accordingly using `environmentKey`.
 
 ## Concurrent Queries
 
