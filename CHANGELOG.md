@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.22.0"></a>
+# [0.22.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.21.0...v0.22.0) (2021-07-12)
+
+
+### Features
+
+* **continueOnFailure:** continue on env variables missing ([7171a14](https://github.com/algolia/gatsby-plugin-algolia/commit/7171a14)), closes [#141](https://github.com/algolia/gatsby-plugin-algolia/issues/141)
+
+
+
 <a name="0.21.0"></a>
 # [0.21.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.20.1...v0.21.0) (2021-07-08)
 
