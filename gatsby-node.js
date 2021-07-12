@@ -61,6 +61,12 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     );
   }
 
+  if (continueOnFailure === true && !(appId && apiKey)) {
+    activity.setStatus(`options.continueOnFailure is true and api key or appId are missing; skipping indexing`);
+    activity.end();
+    return;
+  }
+
   const client = algoliasearch(appId, apiKey, {
     timeouts: {
       connect: 1,
