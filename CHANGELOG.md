@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.22.1"></a>
+## [0.22.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.22.0...v0.22.1) (2021-08-23)
+
+
+### Bug Fixes
+
+* **matchFields:** don't remove unrelated objects ([cedb355](https://github.com/algolia/gatsby-plugin-algolia/commit/cedb355))
+
+
+
 <a name="0.22.0"></a>
 # [0.22.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.21.0...v0.22.0) (2021-07-12)
 
