@@ -62,7 +62,9 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
   }
 
   if (continueOnFailure === true && !(appId && apiKey)) {
-    activity.setStatus(`options.continueOnFailure is true and api key or appId are missing; skipping indexing`);
+    activity.setStatus(
+      `options.continueOnFailure is true and api key or appId are missing; skipping indexing`
+    );
     activity.end();
     return;
   }
@@ -243,9 +245,15 @@ async function runIndexQueries(
           // remove from queryResultsMap, since it is already accounted for
           delete queryResultsMap[id];
         } else {
-          // check if existing object exists in any new query
-          if (!allObjectsMap.hasOwnProperty(id)) {
-            // existing object not in new queries; remove
+          // remove existing object if it is managed and not returned from a query
+          if (
+            // not in any query
+            !allObjectsMap.hasOwnProperty(id) &&
+            // managed by this plugin
+            matchFields.some(
+              field => existingObj.hasOwnProperty(field) === true
+            )
+          ) {
             toRemove[id] = true;
           }
         }
