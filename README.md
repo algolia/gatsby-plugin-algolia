@@ -58,6 +58,7 @@ const queries = [
       // Note: by supplying settings, you will overwrite all existing settings on the index
     },
     matchFields: ['slug', 'modified'], // Array<String> overrides main match fields, optional
+    fetchFilters: '', // <String> default: for working with only specific records in an index, optional
   },
 ];
 
@@ -80,6 +81,7 @@ module.exports = {
         },
         enablePartialUpdates: true, // default: false
         matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
+        fetchFilters: '', // <String> default: '' for working with only specific records in an index, optional
         concurrentQueries: false, // default: true
         skipIndexing: true, // default: false, useful for e.g. preview deploys or local development
         continueOnFailure: false // default: false, don't fail the build if algolia indexing fails
@@ -103,6 +105,7 @@ By default all records will be reindexed on every build. To enable only indexing
     /* (optional) Fields to use for comparing if the index object is different from the new one */
     /* By default it uses a field called "modified" which could be a boolean | datetime string */
     matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
+    fetchFilters: '', // <String> default: '' for working with only specific records in an index, optional
   }
 ```
 
@@ -110,7 +113,7 @@ This saves a lot of Algolia operations since you don't reindex everything on eve
 
 Adding `matchFields` is useful to decide whether an object has been changed since the last time it was indexed. If you save e.g. a timestamp of the record, you can avoid reindexing when it has not changed.
 
-If you have objects which come from another indexing process (wordpress, magento, shopify, custom script...), make sure that they do not have any of the `matchFields`, so they stay in the index regardless of reindex.
+If you have objects which come from another indexing process (wordpress, magento, shopify, custom script...), make sure that `fetchFilters` is specified (example: `fetchFilters: '_tags:magento_source'`)  , so they stay in the index regardless of reindex.
 
 ### Advanced
 

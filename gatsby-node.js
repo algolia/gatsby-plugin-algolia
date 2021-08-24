@@ -3,20 +3,23 @@ const chunk = require('lodash.chunk');
 const deepEqual = require('deep-equal');
 
 /**
- * Fetches all records for the current index from Algolia
+ * Fetches records for the current index from Algolia
  *
- * @param {AlgoliaIndex} index eg. client.initIndex('your_index_name');
+ * @param {String} index eg. client.initIndex('your_index_name');
  * @param {Array<String>} attributesToRetrieve eg. ['modified', 'slug']
+ * @param {String} fetchFilters See https://www.algolia.com/doc/api-reference/api-parameters/filters/
  */
 function fetchAlgoliaObjects(
   index,
   attributesToRetrieve = ['modified'],
-  reporter
+  reporter,
+  fetchFilters
 ) {
   const hits = {};
 
   return index
     .browseObjects({
+      filters: fetchFilters,
       batch: batch => {
         if (Array.isArray(batch)) {
           batch.forEach(hit => {
@@ -24,7 +27,7 @@ function fetchAlgoliaObjects(
           });
         }
       },
-      attributesToRetrieve,
+      attributesToRetrieve: attributesToRetrieve
     })
     .then(() => hits)
     .catch(err =>
@@ -41,6 +44,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     skipIndexing = false,
     dryRun = false,
     continueOnFailure = false,
+    fetchFilters = '',
   } = config;
 
   const activity = reporter.activityTimer(`index to Algolia`);
@@ -92,6 +96,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
         config,
         reporter,
         dryRun,
+        fetchFilters,
       });
 
       if (concurrentQueries) {
@@ -149,7 +154,7 @@ function groupQueriesByIndex(queries = [], config) {
 async function runIndexQueries(
   indexName,
   queries = [],
-  { client, activity, graphql, reporter, config, dryRun }
+  { client, activity, graphql, reporter, config, dryRun, fetchFilters }
 ) {
   const {
     settings: mainSettings,
@@ -206,7 +211,8 @@ async function runIndexQueries(
     const indexedObjects = await fetchAlgoliaObjects(
       indexToUse,
       allMatchFields,
-      reporter
+      reporter,
+      fetchFilters,
     );
 
     // iterate over each query
