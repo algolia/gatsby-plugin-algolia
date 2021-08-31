@@ -6,7 +6,7 @@
 
 You can specify a list of queries to run and how to transform them into an array of objects to index. When you run `gatsby build`, it will publish those to Algolia.
 
-<center>
+<div align="center">
   <a
     href="https://mermaid-js.github.io/mermaid-live-editor/edit##eyJjb2RlIjoiZ3JhcGggTFJcbiAgICBBW1NvdXJjZSAxXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBCW1NvdXJjZSAyXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBDW1NvdXJjZSAzXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBcbiAgICBHYXRzYnkgLS0-IHxnYXRzYnkgYnVpbGR8IEFsZ29saWEiLCJtZXJtYWlkIjoie1xuICBcInRoZW1lXCI6IFwibmV1dHJhXCJcbn0iLCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9"
   >
@@ -15,7 +15,7 @@ You can specify a list of queries to run and how to transform them into an array
       alt="flow diagram"
     />
   </a>
-</center>
+</div>
 
 Here we have an example with some data that might not be very relevant, but will work with the default configuration of `gatsby new`
 
