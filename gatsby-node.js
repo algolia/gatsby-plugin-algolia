@@ -105,6 +105,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
 
     await Promise.all(jobs);
   } catch (err) {
+      console.log("got error", error, JSON.stringify(error))
     if (continueOnFailure) {
       reporter.warn('failed to index to Algolia');
       console.error(err);
@@ -181,11 +182,11 @@ async function runIndexQueries(
     } results`
   );
 
-  const index = client.initIndex(indexName);
+  let index = client.initIndex(indexName);
   const tempIndex = client.initIndex(`${indexName}_tmp`);
 
-  if (!indexExists(index)) {
-    await createIndex(index)
+  if (!await indexExists(index)) {
+    index = await createIndex(index)
   }
 
   const indexToUse = await getIndexToUse({

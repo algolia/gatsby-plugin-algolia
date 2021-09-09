@@ -31,7 +31,6 @@ const queries = [
     // optional
     // indexName: 'pages',
     // optional
-    indexName: 'test_index',
     settings: {
       attributesToSnippet: ['path:5', 'internal'],
     },
@@ -50,6 +49,7 @@ module.exports = {
       options: {
         appId: process.env.ALGOLIA_APPID,
         apiKey: process.env.ALGOLIA_APIKEY,
+        indexName: process.env.ALGOLIA_INDEXNAME, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
         enablePartialUpdates: true, // default: false
