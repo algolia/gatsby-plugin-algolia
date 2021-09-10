@@ -181,8 +181,13 @@ async function runIndexQueries(
     } results`
   );
 
-  const index = client.initIndex(indexName);
+  let index = client.initIndex(indexName);
   const tempIndex = client.initIndex(`${indexName}_tmp`);
+
+  if (!await indexExists(index)) {
+    index = await createIndex(index)
+  }
+
   const indexToUse = await getIndexToUse({
     index,
     tempIndex,
@@ -376,7 +381,7 @@ function indexExists(index) {
     .getSettings()
     .then(() => true)
     .catch(error => {
-      if (error.statusCode !== 404) {
+      if (error.status !== 404) {
         throw error;
       }
 
@@ -392,13 +397,7 @@ function indexExists(index) {
  * @returns {Promise<import('algoliasearch').SearchIndex>}
  */
 async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
-  const mainIndexExists = await indexExists(index);
-
-  if (enablePartialUpdates && !mainIndexExists) {
-    return createIndex(index);
-  }
-
-  if (!enablePartialUpdates && mainIndexExists) {
+  if (!enablePartialUpdates) {
     return tempIndex;
   }
 
