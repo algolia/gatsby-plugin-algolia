@@ -336,16 +336,6 @@ async function runIndexQueries(
       .wait();
   }
 
-  if (dryRun) {
-    console.log('[dry run]: settings', settingsToApply);
-  } else {
-    await indexToUse
-      .setSettings(settingsToApply, {
-        forwardToReplicas,
-      })
-      .wait();
-  }
-
   if (indexToUse === tempIndex && dryRun === false) {
     await moveIndex(client, indexToUse, index);
   }
