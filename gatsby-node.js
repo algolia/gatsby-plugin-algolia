@@ -316,10 +316,11 @@ async function runIndexQueries(
 
   // defer to first query for index settings
   // todo: maybe iterate over all settings and throw if they differ
-  const { settings = mainSettings, forwardToReplicas } = queries[0] || {};
+  const { settings = mainSettings, mergeSettings = false, forwardToReplicas } = queries[0] || {};
 
   const settingsToApply = await getSettingsToApply({
     settings,
+    mergeSettings,
     index,
     tempIndex,
     indexToUse,
@@ -407,6 +408,7 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
 /**
  * @param {object} options
  * @param {import('@algolia/client-search').Settings} options.settings
+ * @param {boolean} query.mergeSettings
  * @param {import('algoliasearch').SearchIndex} options.index
  * @param {import('algoliasearch').SearchIndex} options.tempIndex
  * @param {import('algoliasearch').SearchIndex} options.indexToUse
@@ -415,6 +417,7 @@ async function getIndexToUse({ index, tempIndex, enablePartialUpdates }) {
  */
 async function getSettingsToApply({
   settings,
+  mergeSettings,
   index,
   tempIndex,
   indexToUse,
@@ -435,6 +438,7 @@ async function getSettingsToApply({
   );
 
   const { replicaUpdateMode, ...requestedSettings } = {
+    ...(mergeSettings ? existingSettings : {}),
     ...settings,
     replicas: replicasToSet,
   };
