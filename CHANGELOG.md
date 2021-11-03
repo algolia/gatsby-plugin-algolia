@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.23.0"></a>
+# [0.23.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.22.2...v0.23.0) (2021-11-03)
+
+
+### Bug Fixes
+
+* removing redundant setSettings call ([#152](https://github.com/algolia/gatsby-plugin-algolia/issues/152)) ([7f872fa](https://github.com/algolia/gatsby-plugin-algolia/commit/7f872fa))
+
+
+### Features
+
+* **peer:** Allow installation with Gatsby 4 ([#154](https://github.com/algolia/gatsby-plugin-algolia/issues/154)) ([a9477c8](https://github.com/algolia/gatsby-plugin-algolia/commit/a9477c8))
+
+
+
 <a name="0.22.2"></a>
 ## [0.22.2](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.22.1...v0.22.2) (2021-09-10)
 
