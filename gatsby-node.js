@@ -182,10 +182,12 @@ async function runIndexQueries(
   );
 
   let index = client.initIndex(indexName);
-  const tempIndex = client.initIndex(`${indexName}_tmp`);
 
-  if (!await indexExists(index)) {
-    index = await createIndex(index)
+  const randomTemp = `temp${Math.floor(Math.random() * 100 + 1)}`;
+  const tempIndex = client.initIndex(`${indexName}_${randomTemp}`);
+
+  if (!(await indexExists(index))) {
+    index = await createIndex(index);
   }
 
   const indexToUse = await getIndexToUse({
