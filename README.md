@@ -69,6 +69,7 @@ const queries = [
       // Note: by supplying settings, you will overwrite all existing settings on the index
     },
     matchFields: ['slug', 'modified'], // Array<String> overrides main match fields, optional
+    mergeSettings: false, // optional, defaults to false.  See notes on mergeSettings below
   },
 ];
 
@@ -130,6 +131,14 @@ You can also specify `matchFields` per query to check for different fields based
 ## Settings
 
 You can set settings for each index individually (per query), or otherwise it will keep your existing settings.
+
+### Merge Settings
+
+`mergeSettings` allows you to preserve settings changes made on the Algolia website.  The default behavior (`mergeSettings: false`) will wipe out your index settings and replace them with settings from the config on each build.
+
+When set to true, the config index settings will be merged with the existing index settings in Algolia (with the config index settings taking precendence).
+
+NOTE: When using `mergeSettings`, any **deleted** settings from the config settings will continue to be persisted since they will still exist in Algolia. If you want to remove a setting, be sure to remove it from both the config and on Algolia's website.
 
 ### Replicas
 
