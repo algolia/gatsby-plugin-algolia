@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.24.0"></a>
+# [0.24.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.23.1...v0.24.0) (2021-11-22)
+
+
+### Features
+
+* **settings:** allow keeping index settings using mergeSettings ([#153](https://github.com/algolia/gatsby-plugin-algolia/issues/153)) ([362d4a1](https://github.com/algolia/gatsby-plugin-algolia/commit/362d4a1))
+
+
+
 <a name="0.23.1"></a>
 ## [0.23.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.23.0...v0.23.1) (2021-11-16)
 
