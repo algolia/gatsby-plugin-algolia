@@ -41,6 +41,7 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     skipIndexing = false,
     dryRun = false,
     continueOnFailure = false,
+    requester = null,
   } = config;
 
   const activity = reporter.activityTimer(`index to Algolia`);
@@ -69,13 +70,19 @@ exports.onPostBuild = async function ({ graphql, reporter }, config) {
     return;
   }
 
-  const client = algoliasearch(appId, apiKey, {
+  const clientOptions = {
     timeouts: {
       connect: 1,
       read: 30,
       write: 30,
     },
-  });
+  };
+
+  if (requester) {
+    clientOptions.requester = requester;
+  }
+
+  const client = algoliasearch(appId, apiKey, clientOptions);
 
   activity.setStatus(`${queries.length} queries to index`);
 
