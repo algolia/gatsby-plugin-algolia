@@ -95,6 +95,7 @@ module.exports = {
         concurrentQueries: false, // default: true
         skipIndexing: true, // default: false, useful for e.g. preview deploys or local development
         continueOnFailure: false, // default: false, don't fail the build if algolia indexing fails
+        algoliasearchOptions: undefined, // default: { timeouts: { connect: 1, read: 30, write: 30 } }, pass any different options to the algoliasearch constructor
       },
     },
   ],
