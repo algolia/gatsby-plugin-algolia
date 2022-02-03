@@ -38,26 +38,28 @@ require('dotenv').config({
 });
 
 // gatsby-config.js
-const myQuery = `{
-  pages: allSitePage {
-    nodes {
-      # try to find a unique id for each node
-      # if this field is absent, it's going to
-      # be inserted by Algolia automatically
-      # and will be less simple to update etc.
-      objectID: id
-      component
-      path
-      componentChunkName
-      jsonName
-      internal {
-        type
-        contentDigest
-        owner
+const myQuery = `
+  query {
+    pages: allSitePage {
+      nodes {
+        # try to find a unique id for each node
+        # if this field is absent, it's going to
+        # be inserted by Algolia automatically
+        # and will be less simple to update etc.
+        objectID: id
+        component
+        path
+        componentChunkName
+        jsonName
+        internal {
+          type
+          contentDigest
+          owner
+        }
       }
     }
   }
-}`;
+`;
 
 const queries = [
   {
@@ -69,7 +71,8 @@ const queries = [
       // Note: by supplying settings, you will overwrite all existing settings on the index
     },
     matchFields: ['slug', 'modified'], // Array<String> overrides main match fields, optional
-    mergeSettings: false, // optional, defaults to false.  See notes on mergeSettings below
+    mergeSettings: false, // optional, defaults to false. See notes on mergeSettings below
+    queryVariables: {}, // optional. Allows you to use graphql query variables in the query
   },
 ];
 
@@ -135,7 +138,7 @@ You can set settings for each index individually (per query), or otherwise it wi
 
 ### Merge Settings
 
-`mergeSettings` allows you to preserve settings changes made on the Algolia website.  The default behavior (`mergeSettings: false`) will wipe out your index settings and replace them with settings from the config on each build.
+`mergeSettings` allows you to preserve settings changes made on the Algolia website. The default behavior (`mergeSettings: false`) will wipe out your index settings and replace them with settings from the config on each build.
 
 When set to true, the config index settings will be merged with the existing index settings in Algolia (with the config index settings taking precendence).
 

@@ -463,8 +463,8 @@ function getReplicasToSet(
   }
 }
 
-async function getObjectsMapByQuery({ query, transformer }, graphql, reporter) {
-  const result = await graphql(query);
+async function getObjectsMapByQuery({ query, queryVariables, transformer }, graphql, reporter) {
+  const result = await graphql(query, queryVariables);
   if (result.errors) {
     reporter.panicOnBuild(
       `failed to index to Algolia, errors:\n ${JSON.stringify(result.errors)}`,
