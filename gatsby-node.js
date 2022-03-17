@@ -11,7 +11,7 @@ function fetchExistingObjects(index, reporter, cache) {
   return cache
     .get('algolia-objects')
     .then(values => {
-      if (!values) {
+      if (!values || Object.keys(values).length === 0) {
         throw new Error('cache actually failed');
       }
       return values;
@@ -224,9 +224,8 @@ async function runIndexQueries(
         ) {
           // contentDigest differs, so index new object
           toIndex[id] = newObj;
-        } else {
-          // objects are the same, so skip
         }
+          // objects are the same, so skip
 
         // remove from queryResultsMap, since it is already accounted for
         delete queryResultsMap[id];

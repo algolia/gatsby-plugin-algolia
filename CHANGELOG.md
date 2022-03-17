@@ -10,7 +10,7 @@ For migrating to v1 version smoothly:
 3. set `enablePartialUpdates` to `true`
 4. set `matchFields` to `['internal.contentDigest']`
 
-Once these changes are made, you can index once before updating. Then once updated, you remove the `enablePartialUpdates` and `matchFields` updates from the config.
+You can now index once before updating, then remove the `enablePartialUpdates` and `matchFields` updates from the config.
 
 <a name="0.26.0"></a>
 # [0.26.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.25.0...v0.26.0) (2022-02-03)
