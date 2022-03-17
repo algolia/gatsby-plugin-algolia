@@ -107,7 +107,7 @@ The index will be synchronised with the provided index name on Algolia on the `b
 
 ## Partial Updates
 
-This plugin will update only the changed or deleted notes on your Gatsby site. This means indexing is faster.
+This plugin will update only the changed or deleted nodes on your Gatsby site. This means indexing is faster.
 
 We rely on Gatsby's default contentDigest field, so make sure that this is queried.
 
