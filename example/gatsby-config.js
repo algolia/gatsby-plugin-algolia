@@ -2,37 +2,29 @@ require('dotenv').config({
   path: `.env.${process.env.NODE_ENV}`,
 })
 
-const query = `{
-  allSitePage {
-    edges {
-      node {
-        # try to find a unique id for each node
-        # if this field is absent, it's going to
-        # be inserted by Algolia automatically
-        # and will be less simple to update etc.
-        objectID: id
-        path
+const query = `
+  {
+    allSitePage {
+      nodes {
+        id
         internal {
           contentDigest
         }
+        path
       }
     }
   }
-}`
+`
 
 const queries = [
   {
     query,
-    transformer: ({ data }) =>
-      data.allSitePage.edges.map(({ node: { internal, ...node } }) => ({
-        ...node,
-        contentDigest: internal.contentDigest,
-      })),
+    transformer: ({ data }) => data.allSitePage.nodes,
     // optional
     // indexName: 'pages',
     // optional
     settings: {
-      attributesToSnippet: ['path:5', 'internal'],
+      attributesToSnippet: ['path:5'],
     },
   },
 ]
@@ -52,8 +44,6 @@ module.exports = {
         indexName: process.env.ALGOLIA_INDEXNAME, // for all queries
         queries,
         chunkSize: 10000, // default: 1000
-        enablePartialUpdates: true, // default: false
-        matchFields: ['contentDigest'],
       },
     },
   ],
