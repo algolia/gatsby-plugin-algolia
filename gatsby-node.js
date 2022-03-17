@@ -1,9 +1,23 @@
 const algoliasearch = require('algoliasearch');
 const chunk = require('lodash.chunk');
-const deepEqual = require('deep-equal');
+
+/**
+ * @typedef {import('gatsby').GatsbyCache} GatsbyCache
+ */
+
+/**
+ * @typedef {import('gatsby').Reporter} Reporter
+ */
+
+/**
+ * @typedef {import('algoliasearch').SearchIndex} SearchIndex
+ */
 
 /**
  * Fetches all records for the current index from Algolia
+ * @param {SearchIndex} index
+ * @param {Reporter} reporter
+ * @param {GatsbyCache} cache
  */
 function fetchExistingObjects(index, reporter, cache) {
   const hits = {};
@@ -28,7 +42,7 @@ function fetchExistingObjects(index, reporter, cache) {
               });
             }
           },
-          attributesToRetrieve: 'internal.contentDigest',
+          attributesToRetrieve: ['internal.contentDigest'],
         })
         .then(() => hits)
         .catch(err =>
@@ -37,7 +51,23 @@ function fetchExistingObjects(index, reporter, cache) {
     );
 }
 
-exports.onPostBuild = async function ({ graphql, reporter, cache }, config) {
+/**
+ * @typedef PluginConfiguration
+ * @property {string} appId
+ * @property {string} apiKey
+ * @property {import('algoliasearch').AlgoliaSearchOptions} algoliasearchOptions
+ * @property {any[]} queries
+ * @property {string} indexName
+ * @property {boolean} concurrentQueries
+ * @property {boolean} skipIndexing
+ * @property {boolean} dryRun
+ * @property {boolean} continueOnFailure
+ */
+
+exports.onPostBuild = async function (
+  { graphql, reporter, cache },
+  /** @type {PluginConfiguration} */ config
+) {
   const {
     appId,
     apiKey,
@@ -123,6 +153,9 @@ exports.onPostBuild = async function ({ graphql, reporter, cache }, config) {
   activity.end();
 };
 
+/**
+ * @param {PluginConfiguration} config
+ */
 function groupQueriesByIndex(queries = [], config) {
   const { indexName: mainIndexName } = config;
 
@@ -144,13 +177,14 @@ function groupQueriesByIndex(queries = [], config) {
 /**
  * Run all queries for a given index, then make any updates / removals necessary
  * @param {string} indexName
- * @param {string[]} queries
+ * @param {object[]} queries
  * @param {object} options
  * @param {import('algoliasearch').SearchClient} options.client
  * @param {any} options.activity
  * @param {any} options.graphql
- * @param {any} options.reporter
- * @param {any} options.config
+ * @param {Reporter} options.reporter
+ * @param {PluginConfiguration} options.config
+ * @param {GatsbyCache} options.cache
  * @param {boolean=} options.dryRun
  */
 async function runIndexQueries(
@@ -225,7 +259,7 @@ async function runIndexQueries(
           // contentDigest differs, so index new object
           toIndex[id] = newObj;
         }
-          // objects are the same, so skip
+        // objects are the same, so skip
 
         // remove from queryResultsMap, since it is already accounted for
         delete queryResultsMap[id];
@@ -321,8 +355,7 @@ async function runIndexQueries(
 
 /**
  * Does an Algolia index exist already
- *
- * @param index
+ * @param {import('algoliasearch').SearchIndex} index
  */
 function indexExists(index) {
   return index
@@ -340,10 +373,10 @@ function indexExists(index) {
 /**
  * @param {object} options
  * @param {import('@algolia/client-search').Settings} options.settings
- * @param {boolean} query.mergeSettings
+ * @param {boolean} options.mergeSettings
  * @param {import('algoliasearch').SearchIndex} options.index
- * @param {any} options.reporter
- * @returns {import('@algolia/client-search').Settings}
+ * @param {Reporter} options.reporter
+ * @returns {Promise<import('@algolia/client-search').Settings>}
  */
 async function getSettingsToApply({
   settings,
@@ -351,9 +384,10 @@ async function getSettingsToApply({
   index,
   reporter,
 }) {
-  const existingSettings = await index.getSettings().catch(e => {
-    reporter.panicOnBuild(`${e.toString()} ${index.indexName}`);
-  });
+  const /** @type import('@algolia/client-search').Settings */ existingSettings =
+      await index.getSettings().catch(e => {
+        reporter.panicOnBuild(`${e.toString()} ${index.indexName}`);
+      });
 
   if (!settings) {
     return existingSettings;
@@ -365,6 +399,11 @@ async function getSettingsToApply({
   };
 }
 
+/**
+ * @param {object} options
+ * @param {(query: string, variables?: object) => any} graphql
+ * @param {Reporter} reporter
+ */
 async function getObjectsMapByQuery(
   { query, queryVariables, transformer = x => x },
   graphql,
@@ -393,6 +432,10 @@ async function getObjectsMapByQuery(
   return Object.fromEntries(objects.map(object => [object.objectID, object]));
 }
 
+/**
+ * @param {algoliasearch.SearchClient} client
+ * @param {string} indexName
+ */
 async function initIndex(client, indexName) {
   const index = client.initIndex(indexName);
 
