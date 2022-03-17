@@ -59,7 +59,6 @@ function fetchExistingObjects(index, reporter, cache) {
  * @property {any[]} queries
  * @property {string} indexName
  * @property {boolean} concurrentQueries
- * @property {boolean} skipIndexing
  * @property {boolean} dryRun
  * @property {boolean} continueOnFailure
  */
@@ -73,7 +72,6 @@ exports.onPostBuild = async function (
     apiKey,
     queries,
     concurrentQueries = true,
-    skipIndexing = false,
     dryRun = false,
     continueOnFailure = false,
     algoliasearchOptions = {
@@ -87,12 +85,6 @@ exports.onPostBuild = async function (
 
   const activity = reporter.activityTimer(`index to Algolia`);
   activity.start();
-
-  if (skipIndexing === true) {
-    activity.setStatus(`options.skipIndexing is true; skipping indexing`);
-    activity.end();
-    return;
-  }
 
   if (dryRun === true) {
     console.log(

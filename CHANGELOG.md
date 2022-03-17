@@ -12,6 +12,8 @@ For migrating to v1 version smoothly:
 
 You can now index once before updating, then remove the `enablePartialUpdates` and `matchFields` updates from the config.
 
+For "dev mode", replace `skipIndexing` with `dryRun`, which is largely equivalent, but will validate configuration more.
+
 <a name="0.26.0"></a>
 # [0.26.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.25.0...v0.26.0) (2022-02-03)
 
