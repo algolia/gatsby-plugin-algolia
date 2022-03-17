@@ -268,7 +268,7 @@ async function runIndexQueries(
     /* Add changed / new objects */
     const chunkJobs = chunks.map(async function (chunked) {
       if (dryRun === true) {
-        reporter.info(`Records to add: ${objectsToIndex.length}`);
+        reporter.info(`[dry run]: ${objectsToIndex.length} records to add`);
       } else {
         await index.saveObjects(chunked);
       }
@@ -285,7 +285,7 @@ async function runIndexQueries(
     );
 
     if (dryRun === true) {
-      reporter.info(`Records to delete: ${objectsToRemove.length}`);
+      reporter.info(`[dry run]: ${objectsToRemove.length} records to delete`);
     } else {
       await index.deleteObjects(objectsToRemove).wait();
     }
