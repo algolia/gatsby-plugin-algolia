@@ -14,6 +14,24 @@ const chunk = require('lodash.chunk');
  */
 
 /**
+ * @typedef {import('gatsby').graphql} graphql
+ */
+
+/**
+ * @typedef {import('@algolia/client-search').Settings} Settings
+ */
+
+/**
+ * @typedef Query
+ * @property {string} query The graphql query
+ * @property {object=} queryVariables Allows you to use graphql query variables in the query
+ * @property {Function} transformer transform the results of the query into objects. Likely `({ data }) => data.myProperty.nodes`
+ * @property {string=} indexName index name for this query
+ * @property {Settings} settings index settings for this query
+ * @property {boolean=} mergeSettings defaults to false. Whether settings set in the index are overridden or persisted
+ */
+
+/**
  * Fetches all records for the current index from Algolia
  * @param {SearchIndex} index
  * @param {Reporter} reporter
@@ -56,7 +74,7 @@ function fetchExistingObjects(index, reporter, cache) {
  * @property {string} appId
  * @property {string} apiKey
  * @property {import('algoliasearch').AlgoliaSearchOptions} algoliasearchOptions
- * @property {any[]} queries
+ * @property {Query[]} queries
  * @property {string} indexName
  * @property {boolean} concurrentQueries
  * @property {boolean} dryRun
@@ -64,7 +82,11 @@ function fetchExistingObjects(index, reporter, cache) {
  */
 
 exports.onPostBuild = async function (
-  { graphql, reporter, cache },
+  /** @type {{graphql: graphql, reporter: Reporter, cache: GatsbyCache}} */ {
+    graphql,
+    reporter,
+    cache,
+  },
   /** @type {PluginConfiguration} */ config
 ) {
   const {
@@ -172,8 +194,8 @@ function groupQueriesByIndex(queries = [], config) {
  * @param {object[]} queries
  * @param {object} options
  * @param {import('algoliasearch').SearchClient} options.client
- * @param {any} options.activity
- * @param {any} options.graphql
+ * @param {import('gatsby').ActivityTracker} options.activity
+ * @param {graphql} options.graphql
  * @param {Reporter} options.reporter
  * @param {PluginConfiguration} options.config
  * @param {GatsbyCache} options.cache
@@ -364,11 +386,11 @@ function indexExists(index) {
 
 /**
  * @param {object} options
- * @param {import('@algolia/client-search').Settings} options.settings
+ * @param {Settings} options.settings
  * @param {boolean} options.mergeSettings
  * @param {import('algoliasearch').SearchIndex} options.index
  * @param {Reporter} options.reporter
- * @returns {Promise<import('@algolia/client-search').Settings>}
+ * @returns {Promise<Settings>}
  */
 async function getSettingsToApply({
   settings,
@@ -376,7 +398,7 @@ async function getSettingsToApply({
   index,
   reporter,
 }) {
-  const /** @type import('@algolia/client-search').Settings */ existingSettings =
+  const /** @type Settings */ existingSettings =
       await index.getSettings().catch(e => {
         reporter.panicOnBuild(`${e.toString()} ${index.indexName}`);
       });
@@ -392,8 +414,8 @@ async function getSettingsToApply({
 }
 
 /**
- * @param {object} options
- * @param {(query: string, variables?: object) => any} graphql
+ * @param {Query} options
+ * @param {graphql} graphql
  * @param {Reporter} reporter
  */
 async function getObjectsMapByQuery(
