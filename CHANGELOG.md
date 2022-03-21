@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+
+For migrating to v1 version smoothly:
+
+1. add `id` instead of `objectID` in your query
+2. query for `internal { contentDigest }` and do not transform it
+3. set `enablePartialUpdates` to `true`
+4. set `matchFields` to `['internal.contentDigest']`
+
+You can now index once before updating, then remove the `enablePartialUpdates` and `matchFields` updates from the config.
+
+For "dev mode", replace `skipIndexing` with `dryRun`, which is largely equivalent, but will validate configuration more.
+
 <a name="0.26.0"></a>
 # [0.26.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.25.0...v0.26.0) (2022-02-03)
 

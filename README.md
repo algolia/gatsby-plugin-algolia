@@ -52,8 +52,8 @@ const myQuery = `
         componentChunkName
         jsonName
         internal {
-          type
           contentDigest
+          type
           owner
         }
       }
@@ -64,15 +64,14 @@ const myQuery = `
 const queries = [
   {
     query: myQuery,
+    queryVariables: {}, // optional. Allows you to use graphql query variables in the query
     transformer: ({ data }) => data.pages.nodes, // optional
     indexName: 'index name to target', // overrides main index name, optional
     settings: {
       // optional, any index settings
       // Note: by supplying settings, you will overwrite all existing settings on the index
     },
-    matchFields: ['slug', 'modified'], // Array<String> overrides main match fields, optional
     mergeSettings: false, // optional, defaults to false. See notes on mergeSettings below
-    queryVariables: {}, // optional. Allows you to use graphql query variables in the query
   },
 ];
 
@@ -93,8 +92,7 @@ module.exports = {
           // optional, any index settings
           // Note: by supplying settings, you will overwrite all existing settings on the index
         },
-        enablePartialUpdates: true, // default: false
-        matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
+        mergeSettings: false, // optional, defaults to false. See notes on mergeSettings below
         concurrentQueries: false, // default: true
         skipIndexing: true, // default: false, useful for e.g. preview deploys or local development
         continueOnFailure: false, // default: false, don't fail the build if algolia indexing fails
@@ -109,28 +107,9 @@ The index will be synchronised with the provided index name on Algolia on the `b
 
 ## Partial Updates
 
-By default all records will be reindexed on every build. To enable only indexing the new, changed and deleted records include the following in the options of the plugin:
+This plugin will update only the changed or deleted nodes on your Gatsby site.
 
-```js
-  resolve: `gatsby-plugin-algolia`,
-  options: {
-    /* ... */
-    enablePartialUpdates: true,
-    /* (optional) Fields to use for comparing if the index object is different from the new one */
-    /* By default it uses a field called "modified" which could be a boolean | datetime string */
-    matchFields: ['slug', 'modified'], // Array<String> default: ['modified']
-  }
-```
-
-This saves a lot of Algolia operations since you don't reindex everything on every build.
-
-Adding `matchFields` is useful to decide whether an object has been changed since the last time it was indexed. If you save e.g. a timestamp of the record, you can avoid reindexing when it has not changed.
-
-If you have objects which come from another indexing process (wordpress, magento, shopify, custom script...), make sure that they do not have any of the `matchFields`, so they stay in the index regardless of reindex.
-
-### Advanced
-
-You can also specify `matchFields` per query to check for different fields based on the type of objects you are indexing.
+**We rely on Gatsby's default `contentDigest` field, so make sure it is queried.**
 
 ## Settings
 
@@ -143,14 +122,6 @@ You can set settings for each index individually (per query), or otherwise it wi
 When set to true, the config index settings will be merged with the existing index settings in Algolia (with the config index settings taking precendence).
 
 NOTE: When using `mergeSettings`, any **deleted** settings from the config settings will continue to be persisted since they will still exist in Algolia. If you want to remove a setting, be sure to remove it from both the config and on Algolia's website.
-
-### Replicas
-
-For replica settings, extra care is taken to make sure only apply replicas to non-temporary indices.
-
-If you pass `replicaUpdateMode: 'replace'` in the index settings, you can choose to update the replicas fully with those in the settings.
-
-If you pass `replicaUpdateMode: 'merge'` in the index settings, the replica settings will combine the replicas set on your dashboard with the additional ones you set via index settings here.
 
 ## Concurrent Queries
 
