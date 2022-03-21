@@ -42,16 +42,14 @@ const myQuery = `
   query {
     pages: allSitePage {
       nodes {
-        # try to find a unique id for each node
-        # if this field is absent, it's going to
-        # be inserted by Algolia automatically
-        # and will be less simple to update etc.
-        objectID: id
+        # querying id is required
+        id
         component
         path
         componentChunkName
         jsonName
         internal {
+          # querying internal.contentDigest is required
           contentDigest
           type
           owner
@@ -94,8 +92,8 @@ module.exports = {
         },
         mergeSettings: false, // optional, defaults to false. See notes on mergeSettings below
         concurrentQueries: false, // default: true
-        skipIndexing: true, // default: false, useful for e.g. preview deploys or local development
-        continueOnFailure: false, // default: false, don't fail the build if algolia indexing fails
+        dryRun: false, // default: false, only calculate which objects would be indexed, but do not push to Algolia
+        continueOnFailure: false, // default: false, don't fail the build if Algolia indexing fails
         algoliasearchOptions: undefined, // default: { timeouts: { connect: 1, read: 30, write: 30 } }, pass any different options to the algoliasearch constructor
       },
     },
