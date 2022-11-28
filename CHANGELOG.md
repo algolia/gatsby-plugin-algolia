@@ -2,17 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.0"></a>
+# [1.0.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.26.0...v1.0.0) (2022-11-28)
 
-For migrating to v1 version smoothly:
 
-1. add `id` instead of `objectID` in your query
-2. query for `internal { contentDigest }` and do not transform it
-3. set `enablePartialUpdates` to `true`
-4. set `matchFields` to `['internal.contentDigest']`
+### Features
 
-You can now index once before updating, then remove the `enablePartialUpdates` and `matchFields` updates from the config.
+* **dependencies:** support gatsby 5 ([658018e](https://github.com/algolia/gatsby-plugin-algolia/commit/658018e)), closes [#166](https://github.com/algolia/gatsby-plugin-algolia/issues/166)
+* **indexing:** simplify and rely on contentDigest ([#162](https://github.com/algolia/gatsby-plugin-algolia/issues/162)) ([4cff643](https://github.com/algolia/gatsby-plugin-algolia/commit/4cff643))
 
-For "dev mode", replace `skipIndexing` with `dryRun`, which is largely equivalent, but will validate configuration more.
+
+### BREAKING CHANGES
+
+* **indexing:** make enablePartialUpdates true, and remove the option
+* **indexing:** rely on contentDigest only for matchFields and remove the option
+* **indexing:** remove the skipIndexing flag, use either dryRun or continueOnFailure
+
+
 
 <a name="0.26.0"></a>
 # [0.26.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.25.0...v0.26.0) (2022-02-03)
