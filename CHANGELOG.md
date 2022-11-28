@@ -18,7 +18,12 @@ All notable changes to this project will be documented in this file. See [standa
 * **indexing:** rely on contentDigest only for matchFields and remove the option
 * **indexing:** remove the skipIndexing flag, use either dryRun or continueOnFailure
 
+For migrating to v1 version smoothly:
 
+1. add `id` instead of `objectID` in your query
+2. query for `internal { contentDigest }` and do not transform it
+3. set `enablePartialUpdates` to `true`
+4. set `matchFields` to `['internal.contentDigest']`
 
 <a name="0.26.0"></a>
 # [0.26.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.25.0...v0.26.0) (2022-02-03)
