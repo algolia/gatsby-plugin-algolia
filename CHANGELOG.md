@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.1"></a>
+## [1.0.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v1.0.0...v1.0.1) (2022-11-29)
+
+
+### Bug Fixes
+
+* **initial:** when your index has objects without contentDigest, those should be skipped ([a9c1bd2](https://github.com/algolia/gatsby-plugin-algolia/commit/a9c1bd2)), closes [#167](https://github.com/algolia/gatsby-plugin-algolia/issues/167)
+
+
+
 <a name="1.0.0"></a>
 # [1.0.0](https://github.com/algolia/gatsby-plugin-algolia/compare/v0.26.0...v1.0.0) (2022-11-28)
 
