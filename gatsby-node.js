@@ -234,7 +234,7 @@ async function runIndexQueries(
     Object.fromEntries(
       Object.entries(allObjectsMap).map(([objectID, object]) => [
         objectID,
-        { internal: { contentDigest: object.internal.contentDigest } },
+        { internal: { contentDigest: object.internal?.contentDigest } },
       ])
     )
   );
