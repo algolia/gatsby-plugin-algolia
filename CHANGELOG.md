@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.2"></a>
+## [1.0.2](https://github.com/algolia/gatsby-plugin-algolia/compare/v1.0.1...v1.0.2) (2022-12-05)
+
+
+### Bug Fixes
+
+* **importing:** safe check of internal.contentDigest ([bbf1350](https://github.com/algolia/gatsby-plugin-algolia/commit/bbf1350)), closes [#168](https://github.com/algolia/gatsby-plugin-algolia/issues/168)
+
+
+
 <a name="1.0.1"></a>
 ## [1.0.1](https://github.com/algolia/gatsby-plugin-algolia/compare/v1.0.0...v1.0.1) (2022-11-29)
 
