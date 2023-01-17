@@ -41,7 +41,7 @@ function fetchExistingObjects(index, reporter, cache) {
   const hits = {};
 
   return cache
-    .get('algolia-objects')
+    .get(`algolia-objects-${index.indexName}`)
     .then(values => {
       if (!values || Object.keys(values).length === 0) {
         throw new Error('cache actually failed');
@@ -230,7 +230,7 @@ async function runIndexQueries(
   }, {});
 
   cache.set(
-    'algolia-objects',
+    `algolia-objects-${indexName}`,
     Object.fromEntries(
       Object.entries(allObjectsMap).map(([objectID, object]) => [
         objectID,
