@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.3"></a>
+## [1.0.3](https://github.com/algolia/gatsby-plugin-algolia/compare/v1.0.2...v1.0.3) (2023-01-17)
+
+
+### Bug Fixes
+
+* **multiIndex:** separate cache per index ([#173](https://github.com/algolia/gatsby-plugin-algolia/issues/173)) ([5241366](https://github.com/algolia/gatsby-plugin-algolia/commit/5241366)), closes [#171](https://github.com/algolia/gatsby-plugin-algolia/issues/171)
+
+
+
 <a name="1.0.2"></a>
 ## [1.0.2](https://github.com/algolia/gatsby-plugin-algolia/compare/v1.0.1...v1.0.2) (2022-12-05)
 
