@@ -6,16 +6,14 @@
 
 You can specify a list of queries to run and how to transform them into an array of objects to index. When you run `gatsby build`, it will publish those to Algolia.
 
-<div align="center">
-  <a
-    href="https://mermaid-js.github.io/mermaid-live-editor/edit##eyJjb2RlIjoiZ3JhcGggTFJcbiAgICBBW1NvdXJjZSAxXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBCW1NvdXJjZSAyXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBDW1NvdXJjZSAzXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBcbiAgICBHYXRzYnkgLS0-IHxnYXRzYnkgYnVpbGR8IEFsZ29saWEiLCJtZXJtYWlkIjoie1xuICBcInRoZW1lXCI6IFwibmV1dHJhXCJcbn0iLCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9"
-  >
-    <img
-      src="https://mermaid.ink/svg/eyJjb2RlIjoiZ3JhcGggTFJcbiAgICBBW1NvdXJjZSAxXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBCW1NvdXJjZSAyXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBDW1NvdXJjZSAzXSAtLT4gfHF1ZXJ5fCBHYXRzYnlcbiAgICBcbiAgICBHYXRzYnkgLS0-IHxnYXRzYnkgYnVpbGR8IEFsZ29saWEiLCJtZXJtYWlkIjp7InRoZW1lIjoibmV1dHJhbCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9"
-      alt="flow diagram"
-    />
-  </a>
-</div>
+```mermaid
+graph LR
+    A[Source 1] --> |query| Gatsby
+    B[Source 2] --> |query| Gatsby
+    C[Source 3] --> |query| Gatsby
+    
+    Gatsby --> |gatsby build| Algolia
+```
 
 Here we have an example with some data that might not be very relevant, but will work with the default configuration of `gatsby new`
 
