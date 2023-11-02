@@ -11,7 +11,7 @@ graph LR
     A[Source 1] --> |query| Gatsby
     B[Source 2] --> |query| Gatsby
     C[Source 3] --> |query| Gatsby
-    
+
     Gatsby --> |gatsby build| Algolia
 ```
 
@@ -127,6 +127,43 @@ Sometimes, on limited platforms like Netlify, concurrent queries to the same ind
 
 The `transformer` field accepts a function and optionally you may provide an `async` function.
 
+Adding a transformer parameter can be useful if the `internal.contentDigest` is more stable than your object. You can for example replace the Gatsby-provided `internal.contentDigest` with a hash of the object.
+
+```js
+const crypto = require('crypto');
+
+function transformer(data) {
+  return data.map(item => {
+    const hash = crypto
+      .createHash('md5')
+      .update(JSON.stringify(item))
+      .digest('hex');
+
+    return {
+      ...item,
+      internal: {
+        ...item.internal,
+        contentDigest: hash,
+      },
+    };
+  });
+}
+```
+
 ## Feedback
 
 This is the very first version of our plugin and isn't yet officially supported. Please leave all your feedback in GitHub issues 😊
+
+## FAQ
+
+### Why do my updates not show up?
+
+This could be happening for a few reasons:
+
+#### Development mode
+
+You are using the `gatsby-plugin-algolia` plugin in development mode. The plugin will only push to Algolia when you run `gatsby build`. This is to prevent you from going over your quota while developing.
+
+#### Static `internal.contentDigest`
+
+Some Gatsby plugins don't create a new `internal.contentDigest`, even if the content has changed. To fix this, use a [`transformer`](#transformer) to create a new `internal.contentDigest` based on the content of the node.
